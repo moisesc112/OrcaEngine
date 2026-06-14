@@ -1,0 +1,43 @@
+# Build directories
+x64/
+x86/
+Debug/
+Release/
+build/
+out/
+bin/
+obj/
+
+# CMake build directories
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Visual Studio files
+*.vcxproj.user
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.VC.db
+*.VC.opendb
+ipch/
+*.aps
+*.ncb
+*.opendb
+*.tlog/
+*.log
+
+# Crash/recovery data
+*.pidb
+*.sdf
+
+# Backup files
+*.bak
+*.old
+*.orig
+
+# Editor/IDE files
+.vs/
+.idea/

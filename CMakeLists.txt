@@ -16,7 +16,18 @@ add_executable (OrcaEngine "src/OrcaEngine.cpp" "src/OrcaEngine.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET OrcaEngine PROPERTY CXX_STANDARD 20)
-  set(TARGET OrcaEngine PROPERTY CXX_STANDARD_REQUIRED ON)
+  set_property(TARGET OrcaEngine PROPERTY CXX_STANDARD_REQUIRED ON)
 endif()
 
-# TODO: Add tests and install targets if needed.
+find_package(Vulkan REQUIRED)
+
+add_subdirectory(external/glm)
+add_subdirectory(external/glfw)
+
+target_link_libraries(OrcaEngine PRIVATE Vulkan::Vulkan 
+										 glm::glm 
+										 glfw)
+
+target_include_directories(OrcaEngine PRIVATE ${Vulkan_INCLUDE_DIRS})
+
+# TODO: Add tests and install targets if needed

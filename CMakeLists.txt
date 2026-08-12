@@ -25,6 +25,7 @@ add_subdirectory(external/glm)
 add_subdirectory(external/glfw)
 
 target_include_directories(OrcaEngine PRIVATE external/stb)
+target_include_directories(OrcaEngine PRIVATE external/tinyobjloader)
 
 target_link_libraries(OrcaEngine PRIVATE Vulkan::Vulkan 
 										 glm::glm 

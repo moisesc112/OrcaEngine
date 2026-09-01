@@ -297,12 +297,15 @@ private:
 		vkDestroyPipeline(device, graphicsPipeline, nullptr);
 		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 
-		vkDestroyRenderPass(device, renderPass, nullptr);
+		//vkDestroyRenderPass(device, renderPass, nullptr);
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-			vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
 			vkDestroyFence(device, inFlightFences[i], nullptr);
+		}
+
+		for (size_t i = 0; i < renderFinishedSemaphores.size(); i++) {
+			vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
 		}
 
 		vkDestroyCommandPool(device, commandPool, nullptr);
@@ -1634,7 +1637,7 @@ private:
 
 	void createSyncObjects() {
 		imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-		renderFinishedSemaphores.resize(swapChainImages.size());
+		renderFinishedSemaphores.resize(swapChainImages.size()); 
 		inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
 		VkSemaphoreCreateInfo semaphoreInfo{};
@@ -1694,7 +1697,7 @@ private:
 		createImageViews();
 		createColorResources();
 		createDepthResources();
-		createFramebuffers();
+		//createFramebuffers();
 	}
 
 	void updateUniformBuffer(uint32_t currentImage) {

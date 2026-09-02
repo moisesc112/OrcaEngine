@@ -12,7 +12,7 @@ endif()
 project ("OrcaEngine")
 
 # Add source to this project's executable.
-add_executable (OrcaEngine "src/OrcaEngine.cpp" "src/OrcaEngine.h")
+add_executable (OrcaEngine "src/OrcaEngine.cpp" "src/OrcaEngine.h" "src/main.cpp" "src/Application.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET OrcaEngine PROPERTY CXX_STANDARD 20)
@@ -24,6 +24,7 @@ find_package(Vulkan REQUIRED)
 add_subdirectory(external/glm)
 add_subdirectory(external/glfw)
 
+target_include_directories(OrcaEngine PRIVATE include)
 target_include_directories(OrcaEngine PRIVATE external/stb)
 target_include_directories(OrcaEngine PRIVATE external/tinyobjloader)
 

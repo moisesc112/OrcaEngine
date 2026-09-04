@@ -14,15 +14,9 @@
 #include <fstream>
 #include <chrono>
 
-Renderer::Renderer()
-{
+Renderer::Renderer() {}
 
-}
-
-Renderer::~Renderer()
-{
-
-}
+Renderer::~Renderer() {}
 
 void Renderer::init(GLFWwindow* window, VulkanContext* vulkanContext, Swapchain* swapChain2)
 {

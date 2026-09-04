@@ -17,7 +17,7 @@ add_executable (OrcaEngine "src/main.cpp"
 						   "src/Swapchain.cpp" 
 						   "src/VulkanContext.cpp" 
 						   "src/OrcaEngine.cpp" 
-						   "src/OrcaEngine.h" "src/VulkanUtils.cpp" "src/Renderer.cpp")
+						   "src/OrcaEngine.h" "src/VulkanUtils.cpp" "src/Renderer.cpp" "src/Window.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET OrcaEngine PROPERTY CXX_STANDARD 20)

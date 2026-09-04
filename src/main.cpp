@@ -6,6 +6,7 @@ int main()
 	try 
 	{
 		Application app;
+		app.init();
 		app.run();
 	}
 	catch (const std::exception& e)

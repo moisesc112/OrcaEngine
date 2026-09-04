@@ -1,5 +1,6 @@
 #pragma once
 
+#include <OrcaEngine/Window.hpp>
 #include <OrcaEngine/VulkanContext.hpp>
 #include <OrcaEngine/Swapchain.hpp>
 #include <OrcaEngine/Renderer.hpp>
@@ -26,31 +27,24 @@
 #include <chrono>
 #include <unordered_map>
 
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
-
 class Application {
 public:
 	Application();
 	~Application();
 
+	void init();
 	void run();
 
 private:
-	void initWindow();
-	void initVulkan();
-	void mainLoop();
 	void cleanup();
 
+	void initWindow();
 	void initContext();
 	void initSwapchain();
 	void initRenderer();
 
-	GLFWwindow* window = nullptr;
-
-	VulkanContext vulkanContext;
+	Window _window;
+	VulkanContext _vulkanContext;
 	Swapchain _swapChain;
 	Renderer _renderer;
-
-	VkDevice device = VK_NULL_HANDLE;
 };

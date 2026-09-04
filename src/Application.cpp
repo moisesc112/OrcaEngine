@@ -8,68 +8,53 @@ Application::~Application()
 	cleanup();
 }
 
-void Application::run() {
+void Application::init()
+{
 	initWindow();
-	initVulkan();
-	mainLoop();
-}
-
-void Application::initWindow() {
-	glfwInit();
-
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-	window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
-	glfwSetWindowUserPointer(window, this);
-	glfwSetFramebufferSizeCallback(window, Renderer::framebufferResizeCallback);
-}
-
-void Application::initVulkan() {
-	
 	initContext();
 	initSwapchain();
 	initRenderer();
 }
 
-void Application::mainLoop() {
-	while (!glfwWindowShouldClose(window)) {
+void Application::run() 
+{
+	while (!_window.shouldClose()) {
 		glfwPollEvents();
 		_renderer.drawFrame();
 	}
 
-	vkDeviceWaitIdle(device);
+	vkDeviceWaitIdle(_vulkanContext.getLogicalDevice());
 }
 
-void Application::cleanup() {
-
+void Application::cleanup() 
+{
 	_renderer.cleanupSwapchainResources();
-
 	_swapChain.cleanupSwapChain();
-
 	_renderer.cleanup();
-
-	vulkanContext.cleanup();
-
-	glfwDestroyWindow(window);
-
-	glfwTerminate();
+	_vulkanContext.cleanup();
+	_window.cleanup();
 }
+
+void Application::initWindow() 
+{
+	_window.init();
+	glfwSetWindowUserPointer(_window.getHandle(), this);
+	glfwSetFramebufferSizeCallback(_window.getHandle(), Renderer::framebufferResizeCallback);
+}
+
 
 void Application::initContext() 
 {
-	vulkanContext.init(window);
-
-	device = vulkanContext.getLogicalDevice();
+	_vulkanContext.init(_window.getHandle());
 }
 
 void Application::initSwapchain()
 {
-	_swapChain.init(window, vulkanContext);
+	_swapChain.init(_window.getHandle(), _vulkanContext);
 }
 
 void Application::initRenderer()
 {
-	_renderer.init(window, &vulkanContext, &_swapChain);
+	_renderer.init(_window.getHandle(), &_vulkanContext, &_swapChain);
 }
 

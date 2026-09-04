@@ -12,7 +12,12 @@ endif()
 project ("OrcaEngine")
 
 # Add source to this project's executable.
-add_executable (OrcaEngine "src/OrcaEngine.cpp" "src/OrcaEngine.h" "src/main.cpp" "src/Application.cpp")
+add_executable (OrcaEngine "src/main.cpp" 
+						   "src/Application.cpp" 
+						   "src/Swapchain.cpp" 
+						   "src/VulkanContext.cpp" 
+						   "src/OrcaEngine.cpp" 
+						   "src/OrcaEngine.h" "src/VulkanUtils.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET OrcaEngine PROPERTY CXX_STANDARD 20)

@@ -159,7 +159,7 @@ void Swapchain::createImageViews()
 	swapChainImageViews.resize(swapChainImages.size());
 
 	for (size_t i = 0; i < swapChainImages.size(); i++) {
-		swapChainImageViews[i] = createImageView(_vulkanContext->getLogicalDevice(), swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+		swapChainImageViews[i] = VulkanUtils::createImageView(_vulkanContext->getLogicalDevice(), swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 	}
 }
 
@@ -200,6 +200,7 @@ QueueFamilyIndices Swapchain::findQueueFamilies(VkPhysicalDevice device)
 
 void Swapchain::recreate()
 {
+	cleanupSwapChain();
 	createSwapChain();
 	createImageViews();
 }

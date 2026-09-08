@@ -26,50 +26,50 @@ const std::string MODEL_PATH = "C:/Users/moise/Documents/VS_projects/OrcaEngine/
 const std::string TEXTURE_PATH = "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/viking_room.png";
 
 struct Vertex {
-	glm::vec3 pos;
+	glm::vec3 position;
 	glm::vec3 color;
-	glm::vec2 texCoord;
+	glm::vec2 tex_coord;
 
-	static VkVertexInputBindingDescription getBindingDescription() {
-		VkVertexInputBindingDescription bindingDescription{};
-		bindingDescription.binding = 0;
-		bindingDescription.stride = sizeof(Vertex);
-		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	static VkVertexInputBindingDescription GetBindingDescription() {
+		VkVertexInputBindingDescription binding_description{};
+		binding_description.binding = 0;
+		binding_description.stride = sizeof(Vertex);
+		binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-		return bindingDescription;
+		return binding_description;
 	}
 
-	static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
-		std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
-		attributeDescriptions[0].binding = 0;
-		attributeDescriptions[0].location = 0;
-		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[0].offset = offsetof(Vertex, pos);
+	static std::array<VkVertexInputAttributeDescription, 3> GetAttributeDescriptions() {
+		std::array<VkVertexInputAttributeDescription, 3> attribute_descriptions{};
+		attribute_descriptions[0].binding = 0;
+		attribute_descriptions[0].location = 0;
+		attribute_descriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attribute_descriptions[0].offset = offsetof(Vertex, position);
+				 
+		attribute_descriptions[1].binding = 0;
+		attribute_descriptions[1].location = 1;
+		attribute_descriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attribute_descriptions[1].offset = offsetof(Vertex, color);
+				 
+		attribute_descriptions[2].binding = 0;
+		attribute_descriptions[2].location = 2;
+		attribute_descriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+		attribute_descriptions[2].offset = offsetof(Vertex, tex_coord);
 
-		attributeDescriptions[1].binding = 0;
-		attributeDescriptions[1].location = 1;
-		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[1].offset = offsetof(Vertex, color);
-
-		attributeDescriptions[2].binding = 0;
-		attributeDescriptions[2].location = 2;
-		attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-		attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
-
-		return attributeDescriptions;
+		return attribute_descriptions;
 	}
 
 	bool operator==(const Vertex& other) const {
-		return pos == other.pos && color == other.color && texCoord == other.texCoord;
+		return position == other.position && color == other.color && tex_coord == other.tex_coord;
 	}
 };
 
 namespace std {
 	template<> struct hash<Vertex> {
 		size_t operator()(Vertex const& vertex) const {
-			return ((hash<glm::vec3>()(vertex.pos) ^
+			return ((hash<glm::vec3>()(vertex.position) ^
 				(hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
-				(hash<glm::vec2>()(vertex.texCoord) << 1);
+				(hash<glm::vec2>()(vertex.tex_coord) << 1);
 		}
 	};
 }
@@ -85,106 +85,120 @@ public:
 	Renderer();
 	~Renderer();
 
-	void init(GLFWwindow* window, VulkanContext* vulkanContext, Swapchain* swapChain2);
-	void cleanupSwapchainResources();
-	void cleanup();
+	void Initialize(GLFWwindow* window, VulkanContext* vulkan_context, Swapchain* swapchain);
+	void DestroySwapchainResources();
+	void Shutdown();
 
-	void recreateSwapchainResources();
-	void drawFrame();
+	void RecreateSwapchainResources();
+	void DrawFrame();
 
-	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
+	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 
-	bool framebufferResized = false;
+	bool framebuffer_resized = false;
 
 private:
 
-	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 
-	void createDescriptorSetLayout();
-	void createGraphicsPipeline();
-	void createCommandPool();
-	void createColorResources();
-	void createDepthResources();
-	VkFormat findDepthFormat();
-	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
-	bool hasStencilComponent(VkFormat format);
-	void createTextureImage();
-	void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
-	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-	void createTextureImageView();
-	void createTextureSampler();
-	void loadModel();
-	void createVertexBuffer();
-	void createIndexBuffer();
-	void createUniformBuffers();
-	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-	VkCommandBuffer beginSingleTimeCommands();
-	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
-	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-	void createDescriptorPool();
-	void createDescriptorSets();
-	void createCommandBuffers();
-	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
-	void createSyncObjects();
-	void recreateSwapChain();
+	void CreateDescriptorSetLayout();
+	void CreateGraphicsPipeline();
+	void CreateCommandPool();
+	void CreateColorResources();
+	void CreateDepthResources();
+	VkFormat FindDepthFormat();
+	VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+	bool HasStencilComponent(VkFormat format);
+	void CreateTextureImage();
 
-	void updateUniformBuffer(uint32_t currentImage);
-	VkShaderModule createShaderModule(const std::vector<char>& code);
-	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
+	void CreateImage(uint32_t width, 
+					 uint32_t height, 
+				 	 uint32_t mip_levels, 
+					 VkSampleCountFlagBits num_samples, 
+					 VkFormat format, 
+					 VkImageTiling tiling, 
+					 VkImageUsageFlags usage, 
+					 VkMemoryPropertyFlags properties, 
+					 VkImage& image, 
+					 VkDeviceMemory& image_memory);
 
-	
+	void TransitionImageLayout(VkImage image, 
+							   VkFormat format, 
+							   VkImageLayout old_layout, 
+							   VkImageLayout new_layout, 
+							   uint32_t mip_levels);
 
-	static std::vector<char> readFile(const std::string& filename);
+	void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+	void CreateTextureImageView();
+	void CreateTextureSampler();
+	void LoadModel();
+	void CreateVertexBuffer();
+	void CreateIndexBuffer();
+	void CreateUniformBuffers();
+	void CreateBuffer(VkDeviceSize size, 
+					  VkBufferUsageFlags usage, 
+					  VkMemoryPropertyFlags properties, 
+					  VkBuffer& buffer, 
+					  VkDeviceMemory& buffer_memory);
+
+	VkCommandBuffer BeginSingleTimeCommands();
+	void EndSingleTimeCommands(VkCommandBuffer command_buffer);
+	void CopyBuffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
+	uint32_t FindMemoryType(uint32_t type_filter, VkMemoryPropertyFlags properties);
+	void CreateDescriptorPool();
+	void CreateDescriptorSets();
+	void CreateCommandBuffers();
+	void RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index);
+	void CreateSyncObjects();
+	void RecreateSwapChain();
+
+	void UpdateUniformBuffer(uint32_t current_image);
+	VkShaderModule CreateShaderModule(const std::vector<char>& code);
+
+	void GenerateMipmaps(VkImage image, 
+						 VkFormat image_format, 
+						 int32_t tex_width, 
+						 int32_t tex_height, 
+						 uint32_t mip_levels);
+
+	static std::vector<char> ReadFile(const std::string& filename);
 
 	GLFWwindow* _window = nullptr;
-	VulkanContext* _vulkanContext = nullptr;
-	Swapchain* _swapChain = nullptr;
-	VkDevice device = VK_NULL_HANDLE;
+	VulkanContext* _vulkan_context = nullptr;
+	Swapchain* _swapchain = nullptr;
 
-	VkInstance instance;
-	VkDebugUtilsMessengerEXT debugMessenger;
-	VkSurfaceKHR surface;
-	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-	VkQueue graphicsQueue;
-	VkQueue presentQueue;
-	VkSwapchainKHR swapChain;
-	std::vector<VkImage> swapChainImages;
-	VkFormat swapChainImageFormat;
-	VkExtent2D swapChainExtent;
-	std::vector<VkImageView> swapChainImageViews;
-	VkDescriptorSetLayout descriptorSetLayout;
-	VkPipelineLayout pipelineLayout;
-	VkPipeline graphicsPipeline;
-	std::vector<VkFramebuffer> swapChainFramebuffers;
-	VkCommandPool commandPool;
-	std::vector<VkCommandBuffer> commandBuffers;
-	std::vector<VkSemaphore> imageAvailableSemaphores;
-	std::vector<VkSemaphore> renderFinishedSemaphores;
-	std::vector<VkFence> inFlightFences;
-	uint32_t currentFrame = 0;
-	VkBuffer vertexBuffer;
-	VkDeviceMemory vertexBufferMemory;
-	VkBuffer indexBuffer;
-	VkDeviceMemory indexBufferMemory;
-	std::vector<VkBuffer> uniformBuffers;
-	std::vector<VkDeviceMemory> uniformBuffersMemory;
-	std::vector<void*> uniformBuffersMapped;
-	VkDescriptorPool descriptorPool;
-	std::vector<VkDescriptorSet> descriptorSets;
-	VkImage textureImage;
-	VkDeviceMemory textureImageMemory;
-	VkImageView textureImageView;
-	VkSampler textureSampler;
-	VkImage depthImage;
-	VkDeviceMemory depthImageMemory;
-	VkImageView depthImageView;
-	std::vector<Vertex> vertices;
-	std::vector<uint32_t> indices;
-	uint32_t mipLevels;
-	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
-	VkImage colorImage;
-	VkDeviceMemory colorImageMemory;
-	VkImageView colorImageView;
+	VkInstance _instance;
+	VkDebugUtilsMessengerEXT _debug_messenger;
+	VkDescriptorSetLayout _descriptor_set_layout;
+	VkPipelineLayout _pipeline_layout;
+	VkPipeline _graphics_pipeline;
+	std::vector<VkFramebuffer> _swapchain_framebuffers;
+	VkCommandPool _command_pool;
+	std::vector<VkCommandBuffer> _command_buffers;
+	std::vector<VkSemaphore> _image_available_semaphores;
+	std::vector<VkSemaphore> _render_finished_semaphores;
+	std::vector<VkFence> _in_flight_fences;
+	uint32_t _current_frame = 0;
+	VkBuffer _vertex_buffer;
+	VkDeviceMemory _vertex_buffer_memory;
+	VkBuffer _index_buffer;
+	VkDeviceMemory _index_buffer_memory;
+	std::vector<VkBuffer> _uniform_buffers;
+	std::vector<VkDeviceMemory> _uniform_buffers_memory;
+	std::vector<void*> _uniform_buffers_mapped;
+	VkDescriptorPool _descriptor_pool;
+	std::vector<VkDescriptorSet> _descriptor_sets;
+	VkImage _texture_image;
+	VkDeviceMemory _texture_image_memory;
+	VkImageView _texture_image_view;
+	VkSampler _texture_sampler;
+	VkImage _depth_image;
+	VkDeviceMemory _depth_image_memory;
+	VkImageView _depth_image_view;
+	std::vector<Vertex> _vertices;
+	std::vector<uint32_t> _indices;
+	uint32_t _mip_levels;
+	VkSampleCountFlagBits _msaa_samples = VK_SAMPLE_COUNT_1_BIT;
+	VkImage _color_image;
+	VkDeviceMemory _color_image_memory;
+	VkImageView _color_image_view;
 };

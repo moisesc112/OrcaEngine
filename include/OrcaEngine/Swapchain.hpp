@@ -18,33 +18,33 @@ public:
 	Swapchain();
 	~Swapchain();
 
-	void init(GLFWwindow* window, VulkanContext& vulkanContext);
-	void cleanupSwapChain();
-	void recreate();
+	void Initialize(GLFWwindow* window, VulkanContext& vulkan_context);
+	void Shutdown();
+	void Recreate();
 
-	VkSwapchainKHR getSwapchain() { return swapChain; }
-	std::vector<VkImage> getImages() { return swapChainImages; }
-	VkFormat getFormat() { return swapChainImageFormat; }
-	VkExtent2D getExtent() { return swapChainExtent; }
-	std::vector<VkImageView> getImageViews() { return swapChainImageViews; }
+	VkSwapchainKHR GetSwapchain() { return _swapchain; }
+	std::vector<VkImage> GetImages() { return _swapchain_images; }
+	VkFormat GetFormat() { return _swapchain_image_format; }
+	VkExtent2D GetExtent() { return _swapchain_extent; }
+	std::vector<VkImageView> GetImageViews() { return _swapchain_image_views; }
 private:
 
-	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice& device, VkSurfaceKHR& surface);
-	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-	void createSwapChain();
-	void createImageViews();
-	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice& device, VkSurfaceKHR& surface);
+	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& available_formats);
+	VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& available_present_modes);
+	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+	void CreateSwapChain();
+	void CreateImageViews();
+	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 
 	GLFWwindow* _window = nullptr;
-	VulkanContext* _vulkanContext = VK_NULL_HANDLE;
+	VulkanContext* _vulkan_context = VK_NULL_HANDLE;
 
-	VkSwapchainKHR swapChain;
-	std::vector<VkImage> swapChainImages;
-	VkFormat swapChainImageFormat;
-	VkExtent2D swapChainExtent;
-	std::vector<VkImageView> swapChainImageViews;
+	VkSwapchainKHR _swapchain;
+	std::vector<VkImage> _swapchain_images;
+	VkFormat _swapchain_image_format;
+	VkExtent2D _swapchain_extent;
+	std::vector<VkImageView> _swapchain_image_views;
 
 
 };

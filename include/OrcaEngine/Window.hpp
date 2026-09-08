@@ -10,11 +10,11 @@ public:
 	Window();
 	~Window();
 
-	void init();
-	void cleanup();
-	bool shouldClose();
+	void Initialize();
+	void Shutdown();
+	bool ShouldClose();
 
-	GLFWwindow* getHandle() { return _window; }
+	GLFWwindow* GetHandle() { return _window; }
 private:
 	GLFWwindow* _window = nullptr;
 };

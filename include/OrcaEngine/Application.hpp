@@ -32,19 +32,19 @@ public:
 	Application();
 	~Application();
 
-	void init();
-	void run();
+	void Initialize();
+	void Run();
 
 private:
-	void cleanup();
+	void Shutdown();
 
-	void initWindow();
-	void initContext();
-	void initSwapchain();
-	void initRenderer();
+	void InitWindow();
+	void InitContext();
+	void InitSwapchain();
+	void InitRenderer();
 
 	Window _window;
-	VulkanContext _vulkanContext;
-	Swapchain _swapChain;
+	VulkanContext _vulkan_context;
+	Swapchain _swapchain;
 	Renderer _renderer;
 };

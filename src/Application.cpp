@@ -5,56 +5,56 @@ Application::Application() {}
 
 Application::~Application()
 {
-	cleanup();
+	Shutdown();
 }
 
-void Application::init()
+void Application::Initialize()
 {
-	initWindow();
-	initContext();
-	initSwapchain();
-	initRenderer();
+	InitWindow();
+	InitContext();
+	InitSwapchain();
+	InitRenderer();
 }
 
-void Application::run() 
+void Application::Run() 
 {
-	while (!_window.shouldClose()) {
+	while (!_window.ShouldClose()) {
 		glfwPollEvents();
-		_renderer.drawFrame();
+		_renderer.DrawFrame();
 	}
 
-	vkDeviceWaitIdle(_vulkanContext.getLogicalDevice());
+	vkDeviceWaitIdle(_vulkan_context.GetLogicalDevice());
 }
 
-void Application::cleanup() 
+void Application::Shutdown() 
 {
-	_renderer.cleanupSwapchainResources();
-	_swapChain.cleanupSwapChain();
-	_renderer.cleanup();
-	_vulkanContext.cleanup();
-	_window.cleanup();
+	_renderer.DestroySwapchainResources();
+	_swapchain.Shutdown();
+	_renderer.Shutdown();
+	_vulkan_context.Shutdown();
+	_window.Shutdown();
 }
 
-void Application::initWindow() 
+void Application::InitWindow() 
 {
-	_window.init();
-	glfwSetWindowUserPointer(_window.getHandle(), this);
-	glfwSetFramebufferSizeCallback(_window.getHandle(), Renderer::framebufferResizeCallback);
+	_window.Initialize();
+	glfwSetWindowUserPointer(_window.GetHandle(), this);
+	glfwSetFramebufferSizeCallback(_window.GetHandle(), Renderer::FramebufferResizeCallback);
 }
 
 
-void Application::initContext() 
+void Application::InitContext() 
 {
-	_vulkanContext.init(_window.getHandle());
+	_vulkan_context.Initialize(_window.GetHandle());
 }
 
-void Application::initSwapchain()
+void Application::InitSwapchain()
 {
-	_swapChain.init(_window.getHandle(), _vulkanContext);
+	_swapchain.Initialize(_window.GetHandle(), _vulkan_context);
 }
 
-void Application::initRenderer()
+void Application::InitRenderer()
 {
-	_renderer.init(_window.getHandle(), &_vulkanContext, &_swapChain);
+	_renderer.Initialize(_window.GetHandle(), &_vulkan_context, &_swapchain);
 }
 

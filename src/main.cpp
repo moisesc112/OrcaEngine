@@ -6,8 +6,8 @@ int main()
 	try 
 	{
 		Application app;
-		app.init();
-		app.run();
+		app.Initialize();
+		app.Run();
 	}
 	catch (const std::exception& e)
 	{

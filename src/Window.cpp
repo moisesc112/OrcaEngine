@@ -4,7 +4,7 @@ Window::Window() {}
 
 Window::~Window() {}
 
-void Window::init()
+void Window::Initialize()
 {
 	glfwInit();
 
@@ -14,13 +14,13 @@ void Window::init()
 	_window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
 }
 
-void Window::cleanup()
+void Window::Shutdown()
 {
 	glfwDestroyWindow(_window);
 	glfwTerminate();
 }
 
-bool Window::shouldClose()
+bool Window::ShouldClose()
 {
 	return glfwWindowShouldClose(_window);
 }

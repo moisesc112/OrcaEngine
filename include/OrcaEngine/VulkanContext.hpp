@@ -11,18 +11,18 @@
 #include <optional>
 #include <vector>
 
-const std::vector<const char*> validationLayers = {
+const std::vector<const char*> g_validation_layers = {
 	"VK_LAYER_KHRONOS_validation"
 };
 
-const std::vector<const char*> deviceExtensions = {
+const std::vector<const char*> g_device_extensions = {
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };
 
 #ifdef NDEBUG
-const bool enableValidationLayers = false;
+const bool g_enable_validation_layers = false;
 #else
-const bool enableValidationLayers = true;
+const bool g_enable_validation_layers = true;
 #endif
 
 class VulkanContext {
@@ -31,53 +31,59 @@ public:
 	VulkanContext(GLFWwindow* window);
 	~VulkanContext();
 
-	void init(GLFWwindow* window);
-	void cleanup();
+	void Initialize(GLFWwindow* window);
+	void Shutdown();
 
-	VkPhysicalDevice getPhysicalDevice() { return physicalDevice; }
-	VkDevice getLogicalDevice() { return device; }
-	VkSurfaceKHR getSurface() { return surface; }
-	VkQueue getGraphicsQueue() { return graphicsQueue; }
-	VkQueue getPresentQueue() { return presentQueue; }
-	VkSampleCountFlagBits getMsaaSamples() { return msaaSamples; }
+	VkInstance GetInstance() { return _instance; }
+	VkPhysicalDevice GetPhysicalDevice() { return _physical_device; }
+	VkDevice GetLogicalDevice() { return _device; }
+	VkSurfaceKHR GetSurface() { return _surface; }
+	VkQueue GetGraphicsQueue() { return _graphics_queue; }
+	VkQueue GetPresentQueue() { return _present_queue; }
+	VkSampleCountFlagBits GetMsaaSamples() { return _msaa_samples; }
 
 private:
-	void createInstance();
-	bool checkValidationLayerSupport();
-	std::vector<const char*> getRequiredExtensions();
-	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-	void setupDebugMessenger();
-	void createSurface();
-	void pickPhysicalDevice();
-	bool isDeviceSuitable(VkPhysicalDevice device);
-	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
-	void createLogicalDevice();
-	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
-	VkSampleCountFlagBits getMaxUsableSampleCount();
+	void CreateInstance();
+	bool CheckValidationLayerSupport();
+	std::vector<const char*> GetRequiredExtensions();
+	void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& create_info);
+	void SetupDebugMessenger();
+	void CreateSurface();
+	void PickPhysicalDevice();
+	bool IsDeviceSuitable(VkPhysicalDevice device);
+	bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
+	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
+	void CreateLogicalDevice();
+	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
+	VkSampleCountFlagBits GetMaxUsableSampleCount();
 
-	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-		const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
-	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, 
+										  const VkDebugUtilsMessengerCreateInfoEXT* p_createinfo,
+										  const VkAllocationCallbacks* p_allocator, 
+										  VkDebugUtilsMessengerEXT* p_debug_messenger);
 
-	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-		VkDebugUtilsMessageTypeFlagsEXT messageType,
-		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-		void* pUserData);
+	void DestroyDebugUtilsMessengerEXT(VkInstance instance, 
+									   VkDebugUtilsMessengerEXT debug_messenger, 
+									   const VkAllocationCallbacks* p_allocator);
+
+	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
+		VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
+		VkDebugUtilsMessageTypeFlagsEXT message_type,
+		const VkDebugUtilsMessengerCallbackDataEXT* p_callback_data,
+		void* p_user_data);
 
 
 	GLFWwindow* _window = nullptr;
 
-	VkInstance instance = VK_NULL_HANDLE;
-	VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
-	VkSurfaceKHR surface = VK_NULL_HANDLE;
+	VkInstance _instance = VK_NULL_HANDLE;
+	VkDebugUtilsMessengerEXT _debug_messenger = VK_NULL_HANDLE;
+	VkSurfaceKHR _surface = VK_NULL_HANDLE;
 
-	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-	VkDevice device = VK_NULL_HANDLE;
+	VkPhysicalDevice _physical_device = VK_NULL_HANDLE;
+	VkDevice _device = VK_NULL_HANDLE;
 
-	VkQueue graphicsQueue = VK_NULL_HANDLE;
-	VkQueue presentQueue = VK_NULL_HANDLE;
+	VkQueue _graphics_queue = VK_NULL_HANDLE;
+	VkQueue _present_queue = VK_NULL_HANDLE;
 
-	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+	VkSampleCountFlagBits _msaa_samples = VK_SAMPLE_COUNT_1_BIT;
 };

@@ -3,5 +3,9 @@
 #include <vulkan/vulkan_raii.hpp>
 
 namespace VulkanUtils {
-	VkImageView createImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
+	VkImageView CreateImageView(VkDevice device, 
+								VkImage image, 
+								VkFormat format, 
+								VkImageAspectFlags aspect_flags, 
+								uint32_t mip_levels);
 }

@@ -1,9 +1,4 @@
 #include <OrcaEngine/Application.hpp>
-#include <OrcaEngine/VulkanUtils.hpp>
-
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
 
 Application::Application() {}
 
@@ -33,7 +28,6 @@ void Application::Run()
 		_renderer.DrawFrame(_framebuffer_resized, _editor_ui.GetDrawData());
 		_framebuffer_resized = false;
 	}
-	vkDeviceWaitIdle(_vulkan_context.GetLogicalDevice());
 }
 
 void Application::Shutdown() 

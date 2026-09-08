@@ -63,7 +63,8 @@ void Application::Run()
 		ImGui::ShowDemoWindow();
 		ImGui::Render();
 		
-		_renderer.DrawFrame(ImGui::GetDrawData());
+		_renderer.DrawFrame(framebuffer_resized, ImGui::GetDrawData());
+		framebuffer_resized = false;
 	}
 	vkDeviceWaitIdle(_vulkan_context.GetLogicalDevice());
 }
@@ -86,8 +87,8 @@ void Application::Shutdown()
 void Application::InitWindow() 
 {
 	_window.Initialize();
-	glfwSetWindowUserPointer(_window.GetHandle(), &_renderer);
-	glfwSetFramebufferSizeCallback(_window.GetHandle(), Renderer::FramebufferResizeCallback);
+	glfwSetWindowUserPointer(_window.GetHandle(), this);
+	glfwSetFramebufferSizeCallback(_window.GetHandle(), Application::FramebufferResizeCallback);
 }
 
 
@@ -106,3 +107,7 @@ void Application::InitRenderer()
 	_renderer.Initialize(_window.GetHandle(), &_vulkan_context, &_swapchain);
 }
 
+void Application::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
+	auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+	app->framebuffer_resized = true;
+}

@@ -36,6 +36,8 @@ public:
 	void Run();
 
 private:
+	bool framebuffer_resized = false;
+
 	void Shutdown();
 
 	void InitWindow();
@@ -49,6 +51,9 @@ private:
 		if (err < 0)
 			abort();
 	}
+
+	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
+
 
 	Window _window;
 	VulkanContext _vulkan_context;

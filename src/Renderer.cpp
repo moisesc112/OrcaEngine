@@ -45,11 +45,6 @@ void Renderer::Initialize(GLFWwindow* window, VulkanContext* vulkan_context, Swa
 	CreateSyncObjects();
 }
 
-void Renderer::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
-	auto app = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
-	app->framebuffer_resized = true;
-}
-
 void Renderer::DestroySwapchainResources() 
 {
 	const VkDevice device = _vulkan_context->GetLogicalDevice();
@@ -142,7 +137,7 @@ void Renderer::RecreateSwapchainResources()
 	CreateDepthResources();
 }
 
-void Renderer::DrawFrame(ImDrawData* imgui_draw_data) 
+void Renderer::DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data) 
 {
 	const VkDevice device = _vulkan_context->GetLogicalDevice();
 	const VkSwapchainKHR swapchain = _swapchain->GetSwapchain();
@@ -153,7 +148,7 @@ void Renderer::DrawFrame(ImDrawData* imgui_draw_data)
 	VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, _image_available_semaphores[_current_frame], VK_NULL_HANDLE, &image_index);
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-		RecreateSwapChain();
+		RecreateSwapchain();
 		return;
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -201,8 +196,7 @@ void Renderer::DrawFrame(ImDrawData* imgui_draw_data)
 	result = vkQueuePresentKHR(_vulkan_context->GetPresentQueue(), &present_info);
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebuffer_resized) {
-		framebuffer_resized = false;
-		RecreateSwapChain();
+		RecreateSwapchain();
 	}
 	else if (result != VK_SUCCESS) {
 		throw std::runtime_error("failed to present swap chain image!");
@@ -1151,7 +1145,7 @@ void Renderer::CreateSyncObjects()
 	}
 }
 
-void Renderer::RecreateSwapChain()
+void Renderer::RecreateSwapchain()
 {
 	int width = 0, height = 0;
 	glfwGetFramebufferSize(_window, &width, &height);

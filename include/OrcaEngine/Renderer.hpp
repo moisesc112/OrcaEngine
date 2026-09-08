@@ -91,11 +91,7 @@ public:
 	void Shutdown();
 
 	void RecreateSwapchainResources();
-	void DrawFrame(ImDrawData* imgui_draw_data);
-
-	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
-	
-	bool framebuffer_resized = false;
+	void DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data);
 
 private:
 
@@ -150,7 +146,7 @@ private:
 	void CreateCommandBuffers();
 	void RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data);
 	void CreateSyncObjects();
-	void RecreateSwapChain();
+	void RecreateSwapchain();
 
 	void UpdateUniformBuffer(uint32_t current_image);
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);

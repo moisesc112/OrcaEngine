@@ -950,6 +950,8 @@ void Renderer::CreateCommandBuffers()
 
 void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data) 
 {
+	_draw_call_counter = 0;
+
 	VkCommandBufferBeginInfo begin_info{};
 	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	begin_info.flags = 0;
@@ -1038,6 +1040,7 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 	vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline_layout, 0, 1, &_descriptor_sets[_current_frame], 0, nullptr);
 
 	vkCmdDrawIndexed(command_buffer, static_cast<uint32_t>(_indices.size()), 1, 0, 0, 0);
+	_draw_call_counter++;
 
 	//vkCmdEndRenderPass(commandBuffer);
 	vkCmdEndRendering(command_buffer);

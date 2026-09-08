@@ -4,6 +4,7 @@
 #include <OrcaEngine/VulkanContext.hpp>
 #include <OrcaEngine/Swapchain.hpp>
 #include <OrcaEngine/Renderer.hpp>
+#include <OrcaEngine/EditorUI.hpp>
 
 #include <vulkan/vulkan_raii.hpp>
 #include <GLFW/glfw3.h>
@@ -44,13 +45,7 @@ private:
 	void InitContext();
 	void InitSwapchain();
 	void InitRenderer();
-
-	static void check_vk_result(VkResult err) {
-		if (err == 0) return;
-		std::cerr << "[vulkan] Error: VkResult = " << err << std::endl;
-		if (err < 0)
-			abort();
-	}
+	void InitEditorUI();
 
 	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 
@@ -59,4 +54,5 @@ private:
 	VulkanContext _vulkan_context;
 	Swapchain _swapchain;
 	Renderer _renderer;
+	EditorUI _editor_ui;
 };

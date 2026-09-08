@@ -93,6 +93,10 @@ public:
 	void RecreateSwapchainResources();
 	void DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data);
 
+	std::vector<Vertex> GetVertices() { return _vertices; }
+	std::vector<uint32_t> GetIndices() { return _indices; }
+	uint32_t GetDrawCallCounter() { return _draw_call_counter; }
+
 private:
 
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
@@ -198,4 +202,5 @@ private:
 	VkImage _color_image;
 	VkDeviceMemory _color_image_memory;
 	VkImageView _color_image_view;
+	uint32_t _draw_call_counter = 0;
 };

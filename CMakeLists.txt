@@ -29,9 +29,19 @@ find_package(Vulkan REQUIRED)
 add_subdirectory(external/glm)
 add_subdirectory(external/glfw)
 
+target_sources(OrcaEngine PRIVATE external/imgui/imgui.cpp
+								  external/imgui/imgui_draw.cpp
+								  external/imgui/imgui_tables.cpp
+								  external/imgui/imgui_widgets.cpp
+								  external/imgui/imgui_demo.cpp
+								  external/imgui/backends/imgui_impl_glfw.cpp
+								  external/imgui/backends/imgui_impl_vulkan.cpp)
+
 target_include_directories(OrcaEngine PRIVATE include)
 target_include_directories(OrcaEngine PRIVATE external/stb)
 target_include_directories(OrcaEngine PRIVATE external/tinyobjloader)
+target_include_directories(OrcaEngine PRIVATE external/imgui)
+target_include_directories(OrcaEngine PRIVATE external/imgui/backends)
 
 target_link_libraries(OrcaEngine PRIVATE Vulkan::Vulkan 
 										 glm::glm 

@@ -19,6 +19,7 @@
 
 class VulkanContext;
 class Swapchain;
+struct ImDrawData;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -90,10 +91,10 @@ public:
 	void Shutdown();
 
 	void RecreateSwapchainResources();
-	void DrawFrame();
+	void DrawFrame(ImDrawData* imgui_draw_data);
 
 	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
-
+	
 	bool framebuffer_resized = false;
 
 private:
@@ -147,7 +148,7 @@ private:
 	void CreateDescriptorPool();
 	void CreateDescriptorSets();
 	void CreateCommandBuffers();
-	void RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index);
+	void RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data);
 	void CreateSyncObjects();
 	void RecreateSwapChain();
 

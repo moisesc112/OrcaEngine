@@ -43,6 +43,13 @@ private:
 	void InitSwapchain();
 	void InitRenderer();
 
+	static void check_vk_result(VkResult err) {
+		if (err == 0) return;
+		std::cerr << "[vulkan] Error: VkResult = " << err << std::endl;
+		if (err < 0)
+			abort();
+	}
+
 	Window _window;
 	VulkanContext _vulkan_context;
 	Swapchain _swapchain;

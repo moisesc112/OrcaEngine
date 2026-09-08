@@ -41,6 +41,8 @@ public:
 	VkQueue GetGraphicsQueue() { return _graphics_queue; }
 	VkQueue GetPresentQueue() { return _present_queue; }
 	VkSampleCountFlagBits GetMsaaSamples() { return _msaa_samples; }
+	uint32_t GetGraphicsQueueFamilyIndex() { return _graphics_queue_family_index; }
+	uint32_t GetPresentQueueFamilyIndex() { return _present_queue_family_index; }
 
 private:
 	void CreateInstance();
@@ -86,4 +88,7 @@ private:
 	VkQueue _present_queue = VK_NULL_HANDLE;
 
 	VkSampleCountFlagBits _msaa_samples = VK_SAMPLE_COUNT_1_BIT;
+
+	uint32_t _graphics_queue_family_index = 0;
+	uint32_t _present_queue_family_index = 0;
 };

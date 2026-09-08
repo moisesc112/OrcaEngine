@@ -246,6 +246,8 @@ void VulkanContext::CreateLogicalDevice()
 
 	std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
 	std::set<uint32_t> unique_queue_families = { indices.graphics_family.value(), indices.present_family.value() };
+	_graphics_queue_family_index = indices.graphics_family.value();
+	_present_queue_family_index = indices.present_family.value();
 
 	float queue_priority = 1.0f;
 	for (uint32_t queue_family : unique_queue_families) {

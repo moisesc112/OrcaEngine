@@ -3,6 +3,9 @@
 #include <OrcaEngine/Swapchain.hpp>
 #include <OrcaEngine/VulkanUtils.hpp>
 
+#include <imgui.h>
+#include <imgui_impl_vulkan.h>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -139,7 +142,7 @@ void Renderer::RecreateSwapchainResources()
 	CreateDepthResources();
 }
 
-void Renderer::DrawFrame() 
+void Renderer::DrawFrame(ImDrawData* imgui_draw_data) 
 {
 	const VkDevice device = _vulkan_context->GetLogicalDevice();
 	const VkSwapchainKHR swapchain = _swapchain->GetSwapchain();
@@ -160,7 +163,7 @@ void Renderer::DrawFrame()
 	vkResetFences(device, 1, &_in_flight_fences[_current_frame]);
 
 	vkResetCommandBuffer(_command_buffers[_current_frame], 0);
-	RecordCommandBuffer(_command_buffers[_current_frame], image_index);
+	RecordCommandBuffer(_command_buffers[_current_frame], image_index, imgui_draw_data);
 
 	UpdateUniformBuffer(_current_frame);
 
@@ -452,7 +455,7 @@ VkFormat Renderer::FindSupportedFormat(const std::vector<VkFormat>& candidates, 
 			return format;
 		}
 	}
-	
+
 	throw std::runtime_error("failed to find supported format!");
 }
 
@@ -950,7 +953,7 @@ void Renderer::CreateCommandBuffers()
 	}
 }
 
-void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index) 
+void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data) 
 {
 	VkCommandBufferBeginInfo begin_info{};
 	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -960,24 +963,6 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 	if (vkBeginCommandBuffer(command_buffer, &begin_info) != VK_SUCCESS) {
 		throw std::runtime_error("failed to begin recording command buffer!");
 	}
-
-	/*
-	VkRenderPassBeginInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		for (uint32_t i = 1; i < mip_levels; i++) {
-	renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
-	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = swapChainExtent;
-
-	std::array<VkClearValue, 2> clearValues{};
-	clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
-	clearValues[1].depthStencil = { 1.0f, 0 };
-
-	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	renderPassInfo.pClearValues = clearValues.data();
-
-	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-	*/
 
 	VkImageMemoryBarrier2 to_color_barrier{};
 	to_color_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
@@ -1060,6 +1045,51 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 	vkCmdDrawIndexed(command_buffer, static_cast<uint32_t>(_indices.size()), 1, 0, 0, 0);
 
 	//vkCmdEndRenderPass(commandBuffer);
+	vkCmdEndRendering(command_buffer);
+
+	VkImageMemoryBarrier2 to_imgui_barrier{};
+	to_imgui_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+	to_imgui_barrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+	to_imgui_barrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+	to_imgui_barrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+	to_imgui_barrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+	to_imgui_barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	to_imgui_barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	to_imgui_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	to_imgui_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	to_imgui_barrier.image = _swapchain->GetImages()[image_index];
+	to_imgui_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	to_imgui_barrier.subresourceRange.baseMipLevel = 0;
+	to_imgui_barrier.subresourceRange.levelCount = 1;
+	to_imgui_barrier.subresourceRange.baseArrayLayer = 0;
+	to_imgui_barrier.subresourceRange.layerCount = 1;
+
+	VkDependencyInfo to_imgui_dependency{};
+	to_imgui_dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+	to_imgui_dependency.imageMemoryBarrierCount = 1;
+	to_imgui_dependency.pImageMemoryBarriers = &to_imgui_barrier;
+
+	vkCmdPipelineBarrier2(command_buffer, &to_imgui_dependency);
+
+	VkRenderingAttachmentInfo imgui_color_attachment_info{};
+	imgui_color_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+	imgui_color_attachment_info.imageView = _swapchain->GetImageViews()[image_index];
+	imgui_color_attachment_info.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	imgui_color_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+	imgui_color_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+
+	VkRenderingInfo imgui_rendering_info{};
+	imgui_rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+	imgui_rendering_info.renderArea.offset = { 0, 0 };
+	imgui_rendering_info.renderArea.extent = _swapchain->GetExtent();
+	imgui_rendering_info.layerCount = 1;
+	imgui_rendering_info.colorAttachmentCount = 1;
+	imgui_rendering_info.pColorAttachments = &imgui_color_attachment_info;
+
+	vkCmdBeginRendering(command_buffer, &imgui_rendering_info);
+
+	ImGui_ImplVulkan_RenderDrawData(imgui_draw_data, command_buffer);
+
 	vkCmdEndRendering(command_buffer);
 
 	VkImageMemoryBarrier2 to_present_barrier{};

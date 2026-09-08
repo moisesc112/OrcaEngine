@@ -37,7 +37,7 @@ public:
 	void Run();
 
 private:
-	bool framebuffer_resized = false;
+	bool _framebuffer_resized = false;
 
 	void Shutdown();
 

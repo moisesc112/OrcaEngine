@@ -4,6 +4,7 @@
 #include <OrcaEngine/Swapchain.hpp>
 #include <OrcaEngine/Renderer.hpp>
 
+#include <GLFW/glfw3.h>
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -77,6 +78,11 @@ void EditorUI::Draw()
 void EditorUI::EndFrame()
 {
 	ImGui::Render();
+}
+
+ImDrawData* EditorUI::GetDrawData()
+{
+    return ImGui::GetDrawData();
 }
 
 void EditorUI::DrawDebugPanel()

@@ -2,12 +2,13 @@
 
 #include <vulkan/vulkan_raii.hpp>
 
-#include <GLFW/glfw3.h>
-
 class Window;
 class VulkanContext;
 class Swapchain;
 class Renderer;
+
+struct GLFWwindow;
+struct ImDrawData;
 
 class EditorUI {
 public:
@@ -20,6 +21,8 @@ public:
     void BeginFrame();
     void Draw();
     void EndFrame();
+
+    ImDrawData* GetDrawData();
 private:
     void DrawDebugPanel();
 

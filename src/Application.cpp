@@ -30,8 +30,8 @@ void Application::Run()
 		_editor_ui.Draw();
 		_editor_ui.EndFrame();
 
-		_renderer.DrawFrame(framebuffer_resized, ImGui::GetDrawData());
-		framebuffer_resized = false;
+		_renderer.DrawFrame(_framebuffer_resized, _editor_ui.GetDrawData());
+		_framebuffer_resized = false;
 	}
 	vkDeviceWaitIdle(_vulkan_context.GetLogicalDevice());
 }
@@ -78,5 +78,5 @@ void Application::InitEditorUI()
 
 void Application::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
 	auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
-	app->framebuffer_resized = true;
+	app->_framebuffer_resized = true;
 }

@@ -2,6 +2,7 @@
 #include <OrcaEngine/VulkanContext.hpp>
 #include <OrcaEngine/Swapchain.hpp>
 #include <OrcaEngine/VulkanUtils.hpp>
+#include <OrcaEngine/TransformComponent.hpp>
 
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
@@ -137,7 +138,7 @@ void Renderer::RecreateSwapchainResources()
 	CreateDepthResources();
 }
 
-void Renderer::DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data) 
+void Renderer::DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, TransformComponent& transform) 
 {
 	const VkDevice device = _vulkan_context->GetLogicalDevice();
 	const VkSwapchainKHR swapchain = _swapchain->GetSwapchain();
@@ -160,7 +161,7 @@ void Renderer::DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data)
 	vkResetCommandBuffer(_command_buffers[_current_frame], 0);
 	RecordCommandBuffer(_command_buffers[_current_frame], image_index, imgui_draw_data);
 
-	UpdateUniformBuffer(_current_frame);
+	UpdateUniformBuffer(_current_frame, transform);
 
 	VkSubmitInfo submit_info{};
 	submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1167,7 +1168,7 @@ void Renderer::RecreateSwapchain()
 	RecreateSwapchainResources();
 }
 
-void Renderer::UpdateUniformBuffer(uint32_t current_image) 
+void Renderer::UpdateUniformBuffer(uint32_t current_image, TransformComponent& transform) 
 {
 	static auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -1175,7 +1176,9 @@ void Renderer::UpdateUniformBuffer(uint32_t current_image)
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
 
 	UniformBufferObject ubo{};
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.model = glm::mat4(1.0f);
+	ubo.model = glm::translate(ubo.model, transform.position);
+	ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.proj = glm::perspective(glm::radians(45.0f), _swapchain->GetExtent().width / (float)_swapchain->GetExtent().height, 0.1f, 10.0f);
 	ubo.proj[1][1] *= -1;

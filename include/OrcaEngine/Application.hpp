@@ -5,6 +5,7 @@
 #include <OrcaEngine/Swapchain.hpp>
 #include <OrcaEngine/Renderer.hpp>
 #include <OrcaEngine/EditorUI.hpp>
+#include <OrcaEngine/Registry.hpp>
 
 #include <vulkan/vulkan_raii.hpp>
 #include <GLFW/glfw3.h>
@@ -46,6 +47,7 @@ private:
 	void InitSwapchain();
 	void InitRenderer();
 	void InitEditorUI();
+	void InitRegistry();
 
 	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 
@@ -55,4 +57,6 @@ private:
 	Swapchain _swapchain;
 	Renderer _renderer;
 	EditorUI _editor_ui;
+	Registry _registry;
+	Entity _entity{};
 };

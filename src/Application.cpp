@@ -1,5 +1,8 @@
 #include <OrcaEngine/Application.hpp>
 
+#include <OrcaEngine/TransformComponent.hpp>
+#include <OrcaEngine/MeshComponent.hpp>
+
 Application::Application() {}
 
 Application::~Application()
@@ -13,6 +16,7 @@ void Application::Initialize()
 	InitContext();
 	InitSwapchain();
 	InitRenderer();
+	InitRegistry();
 	InitEditorUI();
 }
 
@@ -25,7 +29,12 @@ void Application::Run()
 		_editor_ui.Draw();
 		_editor_ui.EndFrame();
 
-		_renderer.DrawFrame(_framebuffer_resized, _editor_ui.GetDrawData());
+		auto& transform = _registry.GetComponent<TransformComponent>(_entity);
+		auto& mesh = _registry.GetComponent<MeshComponent>(_entity);
+		std::cout << "transform position: " << transform.position.x << ", " << transform.position.y << ", " << transform.position.z << std::endl;
+		transform.position.x += 0.0001f; 
+
+		_renderer.DrawFrame(_framebuffer_resized, _editor_ui.GetDrawData(), transform);
 		_framebuffer_resized = false;
 	}
 }
@@ -65,9 +74,22 @@ void Application::InitRenderer()
 	_renderer.Initialize(_window.GetHandle(), &_vulkan_context, &_swapchain);
 }
 
+void Application::InitRegistry()
+{
+	_entity = _registry.CreateEntity();
+
+	_registry.AddComponent<TransformComponent>(_entity, TransformComponent{});
+	_registry.AddComponent<MeshComponent>(_entity, MeshComponent{ 0 });
+
+	auto& transform = _registry.GetComponent<TransformComponent>(_entity);
+	//transform.position = glm::vec3(0.0f, 0.0f, 0.0f);
+	std::cout << "transform position: " << transform.position.x << ", " << transform.position.y << ", " << transform.position.z << std::endl;
+}
+
 void Application::InitEditorUI()
 {
-	_editor_ui.Initialize(_window.GetHandle(), &_vulkan_context, &_swapchain, &_renderer);
+	_editor_ui.Initialize(_window.GetHandle(), &_vulkan_context, &_swapchain, &_renderer, &_registry);
+	_editor_ui.SetSelectedEntity(_entity);
 }
 
 void Application::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {

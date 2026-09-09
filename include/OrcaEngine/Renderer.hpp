@@ -20,6 +20,7 @@
 class VulkanContext;
 class Swapchain;
 struct ImDrawData;
+struct TransformComponent;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -91,7 +92,7 @@ public:
 	void Shutdown();
 
 	void RecreateSwapchainResources();
-	void DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data);
+	void DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, TransformComponent& transform);
 
 	std::vector<Vertex> GetVertices() { return _vertices; }
 	std::vector<uint32_t> GetIndices() { return _indices; }
@@ -152,7 +153,7 @@ private:
 	void CreateSyncObjects();
 	void RecreateSwapchain();
 
-	void UpdateUniformBuffer(uint32_t current_image);
+	void UpdateUniformBuffer(uint32_t current_image, TransformComponent& transform);
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
 	void GenerateMipmaps(VkImage image, 

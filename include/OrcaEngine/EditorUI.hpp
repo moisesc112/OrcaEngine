@@ -1,11 +1,14 @@
 #pragma once
 
+#include <OrcaEngine/Entity.hpp>
+
 #include <vulkan/vulkan_raii.hpp>
 
 class Window;
 class VulkanContext;
 class Swapchain;
 class Renderer;
+class Registry;
 
 struct GLFWwindow;
 struct ImDrawData;
@@ -15,7 +18,12 @@ public:
     EditorUI();
     ~EditorUI();
 
-    void Initialize(GLFWwindow* window, VulkanContext* vulkan_context, Swapchain* swapchain, Renderer* renderer);
+    void Initialize(GLFWwindow* window, 
+                    VulkanContext* vulkan_context, 
+                    Swapchain* swapchain, 
+                    Renderer* renderer,
+                    Registry* registry);
+
     void Shutdown();
 
     void BeginFrame();
@@ -23,6 +31,9 @@ public:
     void EndFrame();
 
     ImDrawData* GetDrawData();
+
+    void SetSelectedEntity(Entity entity);
+
 private:
     void DrawDebugPanel();
 
@@ -31,4 +42,7 @@ private:
     VulkanContext* _vulkan_context = nullptr;
     Swapchain* _swapchain = nullptr;
     Renderer* _renderer = nullptr;
+    Registry* _registry = nullptr;
+
+    Entity _selected_entity;
 };

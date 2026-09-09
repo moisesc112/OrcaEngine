@@ -3,6 +3,9 @@
 #include <OrcaEngine/VulkanContext.hpp>
 #include <OrcaEngine/Swapchain.hpp>
 #include <OrcaEngine/Renderer.hpp>
+#include <OrcaEngine/Registry.hpp>
+
+#include <OrcaEngine/TransformComponent.hpp>
 
 #include <GLFW/glfw3.h>
 
@@ -17,11 +20,16 @@ EditorUI::EditorUI() {}
 
 EditorUI::~EditorUI() {}
 
-void EditorUI::Initialize(GLFWwindow* window, VulkanContext* vulkan_context, Swapchain* swapchain, Renderer* renderer)
+void EditorUI::Initialize(GLFWwindow* window, 
+                          VulkanContext* vulkan_context, 
+                          Swapchain* swapchain, 
+                          Renderer* renderer,
+                          Registry* registry)
 {
     _vulkan_context = vulkan_context;
     _swapchain = swapchain;
     _renderer = renderer;
+    _registry = registry;
 
     IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -88,7 +96,7 @@ ImDrawData* EditorUI::GetDrawData()
 void EditorUI::DrawDebugPanel()
 {
     ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f), ImGuiCond_Appearing);
-    ImGui::SetNextWindowSize(ImVec2(220.0f, 220.0f), ImGuiCond_Appearing);
+    ImGui::SetNextWindowSize(ImVec2(220.0f, 250.0f), ImGuiCond_Appearing);
 
     ImGui::Begin("Debug Options");
 
@@ -106,7 +114,20 @@ void EditorUI::DrawDebugPanel()
     ImGui::Text("Resolution: %u x %u", _swapchain->GetExtent().width, _swapchain->GetExtent().height);
     ImGui::Text("MSAA: %ux", _vulkan_context->GetMsaaSamples());
 
+    ImGui::SeparatorText("Selected Entity");
+
+    ImGui::Text("Entity ID: %u", _selected_entity.id);
+    ImGui::Text("Position: (%.2f, %.2f, %.2f)", 
+                _registry->GetComponent<TransformComponent>(_selected_entity).position.x,
+                _registry->GetComponent<TransformComponent>(_selected_entity).position.y,
+                _registry->GetComponent<TransformComponent>(_selected_entity).position.z);
+
     ImGui::End();
+}
+
+void EditorUI::SetSelectedEntity(Entity entity)
+{
+    _selected_entity = entity;
 }
 
 void EditorUI::check_vk_result(VkResult err) 

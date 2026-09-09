@@ -19,7 +19,8 @@ add_executable (OrcaEngine "src/main.cpp"
 						   "src/VulkanUtils.cpp" 
 						   "src/Renderer.cpp" 
 						   "src/Window.cpp"
-						   "src/EditorUI.cpp")
+						   "src/EditorUI.cpp"
+						   "src/EntityManager.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET OrcaEngine PROPERTY CXX_STANDARD 20)

@@ -1,4 +1,4 @@
-#include <OrcaEngine/VulkanUtils.hpp>
+#include <OrcaEngine/Rendering/VulkanUtils.hpp>
 
 VkImageView VulkanUtils::CreateImageView(VkDevice device, 
 										 VkImage image, 

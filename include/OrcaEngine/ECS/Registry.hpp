@@ -1,8 +1,8 @@
 #pragma once
 
-#include <OrcaEngine/EntityManager.hpp>
-#include <OrcaEngine/ComponentPool.hpp>
-#include <OrcaEngine/IComponentPool.hpp>
+#include <OrcaEngine/ECS/EntityManager.hpp>
+#include <OrcaEngine/ECS/ComponentPool.hpp>
+#include <OrcaEngine/ECS/IComponentPool.hpp>
 
 #include <unordered_map>
 #include <stdexcept>

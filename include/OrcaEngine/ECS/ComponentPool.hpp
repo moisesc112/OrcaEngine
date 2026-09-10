@@ -1,7 +1,7 @@
 #pragma once
 
-#include <OrcaEngine/Entity.hpp>
-#include <OrcaEngine/IComponentPool.hpp>
+#include <OrcaEngine/ECS/Entity.hpp>
+#include <OrcaEngine/ECS/IComponentPool.hpp>
 
 #include <vector>
 #include <optional>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <OrcaEngine/Entity.hpp>
+#include <OrcaEngine/ECS/Entity.hpp>
 
 #include <vector>
 

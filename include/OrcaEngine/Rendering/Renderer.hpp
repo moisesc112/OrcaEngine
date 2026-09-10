@@ -1,6 +1,6 @@
 #pragma once
 
-#include <OrcaEngine/VulkanTypes.hpp>
+#include <OrcaEngine/Rendering/VulkanTypes.hpp>
 
 #include <vulkan/vulkan_raii.hpp>
 

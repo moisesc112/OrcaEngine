@@ -1,6 +1,6 @@
-#include <OrcaEngine/Swapchain.hpp>
-#include <OrcaEngine/VulkanContext.hpp>
-#include <OrcaEngine/VulkanUtils.hpp>
+#include <OrcaEngine/Rendering/Swapchain.hpp>
+#include <OrcaEngine/Rendering/VulkanContext.hpp>
+#include <OrcaEngine/Rendering/VulkanUtils.hpp>
 
 Swapchain::Swapchain() {}
 

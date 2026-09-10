@@ -13,14 +13,14 @@ project ("OrcaEngine")
 
 # Add source to this project's executable.
 add_executable (OrcaEngine "src/main.cpp" 
-						   "src/Application.cpp" 
-						   "src/Swapchain.cpp" 
-						   "src/VulkanContext.cpp" 
-						   "src/VulkanUtils.cpp" 
-						   "src/Renderer.cpp" 
-						   "src/Window.cpp"
-						   "src/EditorUI.cpp"
-						   "src/EntityManager.cpp")
+						   "src/Core/Application.cpp" 
+						   "src/Rendering/Swapchain.cpp" 
+						   "src/Rendering/VulkanContext.cpp" 
+						   "src/Rendering/VulkanUtils.cpp" 
+						   "src/Rendering/Renderer.cpp" 
+						   "src/Core/Window.cpp"
+						   "src/Editor/EditorUI.cpp"
+						   "src/ECS/EntityManager.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET OrcaEngine PROPERTY CXX_STANDARD 20)

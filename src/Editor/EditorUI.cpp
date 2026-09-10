@@ -1,11 +1,11 @@
-#include <OrcaEngine/EditorUI.hpp>
-#include <OrcaEngine/Window.hpp>
-#include <OrcaEngine/VulkanContext.hpp>
-#include <OrcaEngine/Swapchain.hpp>
-#include <OrcaEngine/Renderer.hpp>
-#include <OrcaEngine/Registry.hpp>
+#include <OrcaEngine/Editor/EditorUI.hpp>
+#include <OrcaEngine/Core/Window.hpp>
+#include <OrcaEngine/Rendering/VulkanContext.hpp>
+#include <OrcaEngine/Rendering/Swapchain.hpp>
+#include <OrcaEngine/Rendering/Renderer.hpp>
+#include <OrcaEngine/ECS/Registry.hpp>
 
-#include <OrcaEngine/TransformComponent.hpp>
+#include <OrcaEngine/ECS/Components/TransformComponent.hpp>
 
 #include <GLFW/glfw3.h>
 

@@ -1,7 +1,7 @@
-#include <OrcaEngine/Application.hpp>
+#include <OrcaEngine/Core/Application.hpp>
 
-#include <OrcaEngine/TransformComponent.hpp>
-#include <OrcaEngine/MeshComponent.hpp>
+#include <OrcaEngine/ECS/Components/TransformComponent.hpp>
+#include <OrcaEngine/ECS/Components/MeshComponent.hpp>
 
 Application::Application() {}
 
@@ -31,7 +31,6 @@ void Application::Run()
 
 		auto& transform = _registry.GetComponent<TransformComponent>(_entity);
 		auto& mesh = _registry.GetComponent<MeshComponent>(_entity);
-		std::cout << "transform position: " << transform.position.x << ", " << transform.position.y << ", " << transform.position.z << std::endl;
 		transform.position.x += 0.0001f; 
 
 		_renderer.DrawFrame(_framebuffer_resized, _editor_ui.GetDrawData(), transform);
@@ -82,8 +81,6 @@ void Application::InitRegistry()
 	_registry.AddComponent<MeshComponent>(_entity, MeshComponent{ 0 });
 
 	auto& transform = _registry.GetComponent<TransformComponent>(_entity);
-	//transform.position = glm::vec3(0.0f, 0.0f, 0.0f);
-	std::cout << "transform position: " << transform.position.x << ", " << transform.position.y << ", " << transform.position.z << std::endl;
 }
 
 void Application::InitEditorUI()

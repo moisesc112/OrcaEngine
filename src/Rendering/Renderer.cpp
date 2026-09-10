@@ -1,8 +1,8 @@
-#include <OrcaEngine/Renderer.hpp>
-#include <OrcaEngine/VulkanContext.hpp>
-#include <OrcaEngine/Swapchain.hpp>
-#include <OrcaEngine/VulkanUtils.hpp>
-#include <OrcaEngine/TransformComponent.hpp>
+#include <OrcaEngine/Rendering/Renderer.hpp>
+#include <OrcaEngine/Rendering/VulkanContext.hpp>
+#include <OrcaEngine/Rendering/Swapchain.hpp>
+#include <OrcaEngine/Rendering/VulkanUtils.hpp>
+#include <OrcaEngine/ECS/Components/TransformComponent.hpp>
 
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>

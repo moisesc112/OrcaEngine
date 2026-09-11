@@ -1,6 +1,7 @@
 #pragma once
 
 #include <OrcaEngine/Rendering/VulkanTypes.hpp>
+#include <OrcaEngine/Rendering/RenderTypes.hpp>
 
 #include <vulkan/vulkan_raii.hpp>
 
@@ -77,7 +78,6 @@ namespace std {
 }
 
 struct UniformBufferObject {
-	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 view;
 	alignas(16) glm::mat4 proj;
 };
@@ -92,7 +92,7 @@ public:
 	void Shutdown();
 
 	void RecreateSwapchainResources();
-	void DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, TransformComponent& transform);
+	void DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, RenderBundle& render_bundle);
 
 	std::vector<Vertex> GetVertices() { return _vertices; }
 	std::vector<uint32_t> GetIndices() { return _indices; }
@@ -149,11 +149,11 @@ private:
 	void CreateDescriptorPool();
 	void CreateDescriptorSets();
 	void CreateCommandBuffers();
-	void RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data);
+	void RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data, RenderBundle& render_bundle);
 	void CreateSyncObjects();
 	void RecreateSwapchain();
 
-	void UpdateUniformBuffer(uint32_t current_image, TransformComponent& transform);
+	void UpdateUniformBuffer(uint32_t current_image);
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
 	void GenerateMipmaps(VkImage image, 

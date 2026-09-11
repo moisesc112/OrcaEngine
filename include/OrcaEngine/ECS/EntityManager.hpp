@@ -13,8 +13,10 @@ public:
     void DestroyEntity(Entity entity);
 
     bool IsEntityAlive(Entity entity) const;
+    std::vector<Entity>& GetAliveEntities();
 
 private:
     std::vector<EntityID> _entity_ids;
     std::vector<uint32_t> _generations;
+    std::vector<Entity> _alive_entities;
 };

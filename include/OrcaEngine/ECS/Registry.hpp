@@ -70,6 +70,20 @@ public:
         pool->RemoveComponent(entity);
     }
 
+    template<typename... Components>
+    std::vector<Entity> View() 
+    {
+        std::vector<Entity> entities;
+
+        for (Entity entity : _entity_manager.GetAliveEntities()) {
+            if ((HasComponent<Components>(entity) && ...)) {
+                entities.push_back(entity);
+            }
+        }
+
+        return entities;
+    }
+
 private:
     template<typename T>
     ComponentPool<T>& GetOrCreatePool() 
@@ -105,7 +119,7 @@ private:
     }
 
     template<typename T>
-    ComponentPool<T>* GetPool() const
+    const ComponentPool<T>* GetPool() const
     {
         std::string name(typeid(T).name());
 

@@ -49,6 +49,8 @@ private:
 	void InitEditorUI();
 	void InitRegistry();
 
+	RenderBundle ExtractRenderBundle(Registry& registry);
+
 	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 

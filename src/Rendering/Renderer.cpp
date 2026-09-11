@@ -138,7 +138,7 @@ void Renderer::RecreateSwapchainResources()
 	CreateDepthResources();
 }
 
-void Renderer::DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, TransformComponent& transform) 
+void Renderer::DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, RenderBundle& render_bundle) 
 {
 	const VkDevice device = _vulkan_context->GetLogicalDevice();
 	const VkSwapchainKHR swapchain = _swapchain->GetSwapchain();
@@ -159,9 +159,9 @@ void Renderer::DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, 
 	vkResetFences(device, 1, &_in_flight_fences[_current_frame]);
 
 	vkResetCommandBuffer(_command_buffers[_current_frame], 0);
-	RecordCommandBuffer(_command_buffers[_current_frame], image_index, imgui_draw_data);
+	RecordCommandBuffer(_command_buffers[_current_frame], image_index, imgui_draw_data, render_bundle);
 
-	UpdateUniformBuffer(_current_frame, transform);
+	UpdateUniformBuffer(_current_frame);
 
 	VkSubmitInfo submit_info{};
 	submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -349,12 +349,17 @@ void Renderer::CreateGraphicsPipeline()
 	dynamic_state.dynamicStateCount = static_cast<uint32_t>(dynamic_states.size());
 	dynamic_state.pDynamicStates = dynamic_states.data();
 
+	VkPushConstantRange push_constant_range{};
+	push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	push_constant_range.offset = 0;
+	push_constant_range.size = sizeof(PushConstantData);
+
 	VkPipelineLayoutCreateInfo pipeline_layout_info{};
 	pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipeline_layout_info.setLayoutCount = 1;
 	pipeline_layout_info.pSetLayouts = &_descriptor_set_layout;
-	pipeline_layout_info.pushConstantRangeCount = 0;
-	pipeline_layout_info.pPushConstantRanges = nullptr;
+	pipeline_layout_info.pushConstantRangeCount = 1;
+	pipeline_layout_info.pPushConstantRanges = &push_constant_range;
 
 	if (vkCreatePipelineLayout(device, &pipeline_layout_info, nullptr, &_pipeline_layout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create pipeline layout!");
@@ -949,7 +954,7 @@ void Renderer::CreateCommandBuffers()
 	}
 }
 
-void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data) 
+void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data, RenderBundle& render_bundle) 
 {
 	_draw_call_counter = 0;
 
@@ -1034,14 +1039,28 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 
 	VkBuffer vertex_buffers[] = { _vertex_buffer };
 	VkDeviceSize offsets[] = { 0 };
-	vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffers, offsets);
 
-	vkCmdBindIndexBuffer(command_buffer, _index_buffer, 0, VK_INDEX_TYPE_UINT32);
+	for (const RenderItem& render_item : render_bundle.render_items) {
 
-	vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline_layout, 0, 1, &_descriptor_sets[_current_frame], 0, nullptr);
+		glm::mat4 model_matrix(1.0f);
+		model_matrix = glm::translate(model_matrix, render_item.transform.position);
+		//model_matrix = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		//ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-	vkCmdDrawIndexed(command_buffer, static_cast<uint32_t>(_indices.size()), 1, 0, 0, 0);
-	_draw_call_counter++;
+		PushConstantData push_constants{};
+		push_constants.model_matrix = model_matrix;
+
+		vkCmdPushConstants(command_buffer, _pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantData), &push_constants);
+
+		vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffers, offsets);
+
+		vkCmdBindIndexBuffer(command_buffer, _index_buffer, 0, VK_INDEX_TYPE_UINT32);
+
+		vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline_layout, 0, 1, &_descriptor_sets[_current_frame], 0, nullptr);
+
+		vkCmdDrawIndexed(command_buffer, static_cast<uint32_t>(_indices.size()), 1, 0, 0, 0);
+		_draw_call_counter++;
+	}
 
 	//vkCmdEndRenderPass(commandBuffer);
 	vkCmdEndRendering(command_buffer);
@@ -1168,7 +1187,7 @@ void Renderer::RecreateSwapchain()
 	RecreateSwapchainResources();
 }
 
-void Renderer::UpdateUniformBuffer(uint32_t current_image, TransformComponent& transform) 
+void Renderer::UpdateUniformBuffer(uint32_t current_image) 
 {
 	static auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -1176,9 +1195,6 @@ void Renderer::UpdateUniformBuffer(uint32_t current_image, TransformComponent& t
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
 
 	UniformBufferObject ubo{};
-	ubo.model = glm::mat4(1.0f);
-	ubo.model = glm::translate(ubo.model, transform.position);
-	ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.proj = glm::perspective(glm::radians(45.0f), _swapchain->GetExtent().width / (float)_swapchain->GetExtent().height, 0.1f, 10.0f);
 	ubo.proj[1][1] *= -1;

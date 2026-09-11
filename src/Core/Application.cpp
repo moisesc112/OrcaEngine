@@ -29,11 +29,9 @@ void Application::Run()
 		_editor_ui.Draw();
 		_editor_ui.EndFrame();
 
-		auto& transform = _registry.GetComponent<TransformComponent>(_entity);
-		auto& mesh = _registry.GetComponent<MeshComponent>(_entity);
-		transform.position.x += 0.0001f; 
+		RenderBundle render_bundle = ExtractRenderBundle(_registry);
 
-		_renderer.DrawFrame(_framebuffer_resized, _editor_ui.GetDrawData(), transform);
+		_renderer.DrawFrame(_framebuffer_resized, _editor_ui.GetDrawData(), render_bundle);
 		_framebuffer_resized = false;
 	}
 }
@@ -75,18 +73,52 @@ void Application::InitRenderer()
 
 void Application::InitRegistry()
 {
-	_entity = _registry.CreateEntity();
+	{
+	Entity entity = _registry.CreateEntity();
 
-	_registry.AddComponent<TransformComponent>(_entity, TransformComponent{});
-	_registry.AddComponent<MeshComponent>(_entity, MeshComponent{ 0 });
+	_registry.AddComponent<TransformComponent>(entity, TransformComponent{});
+	_registry.AddComponent<MeshComponent>(entity, MeshComponent{ 0 });
+	auto& transform = _registry.GetComponent<TransformComponent>(entity);
+	//transform.position.x += 0.5f;
 
-	auto& transform = _registry.GetComponent<TransformComponent>(_entity);
+	}
+	{
+	Entity entity = _registry.CreateEntity();
+
+	_registry.AddComponent<TransformComponent>(entity, TransformComponent{});
+	_registry.AddComponent<MeshComponent>(entity, MeshComponent{ 0 });
+	auto& transform = _registry.GetComponent<TransformComponent>(entity);
+	//transform.position.x -= 0.5f;
+	}
+	//auto& transform = _registry.GetComponent<TransformComponent>(_entity);
 }
 
 void Application::InitEditorUI()
 {
 	_editor_ui.Initialize(_window.GetHandle(), &_vulkan_context, &_swapchain, &_renderer, &_registry);
 	_editor_ui.SetSelectedEntity(_entity);
+}
+
+RenderBundle Application::ExtractRenderBundle(Registry& registry)
+{
+	std::vector<RenderItem> render_items;
+
+	for (Entity entity : registry.View<MeshComponent, TransformComponent>()) {
+		auto& mesh = registry.GetComponent<MeshComponent>(entity);
+		auto& transform = registry.GetComponent<TransformComponent>(entity);
+		if (entity.id == 0)
+			transform.position.x += 0.0001f;
+		else 
+			transform.position.y += 0.0001f;
+			
+		render_items.push_back({mesh, transform});
+		std::cout << "entity_id:  " << entity.id << std::endl;
+	}
+	std::cout << "render_items size:  " << render_items.size() << std::endl;
+
+	RenderBundle render_bundle{render_items};
+
+	return render_bundle;
 }
 
 void Application::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {

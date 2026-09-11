@@ -86,7 +86,7 @@ void Application::InitRegistry()
 	Entity entity = _registry.CreateEntity();
 
 	_registry.AddComponent<TransformComponent>(entity, TransformComponent{});
-	_registry.AddComponent<MeshComponent>(entity, MeshComponent{ 0 });
+	_registry.AddComponent<MeshComponent>(entity, MeshComponent{ 1 });
 	auto& transform = _registry.GetComponent<TransformComponent>(entity);
 	//transform.position.x -= 0.5f;
 	}

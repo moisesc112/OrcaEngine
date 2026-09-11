@@ -25,8 +25,8 @@ struct TransformComponent;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-const std::string MODEL_PATH = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/viking_room.obj";
-const std::string TEXTURE_PATH = "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/viking_room.png";
+const std::string MODEL_PATH = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/iron_golem.obj";
+const std::string TEXTURE_PATH = "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/iron_golem.png";
 
 struct Vertex {
 	glm::vec3 position;
@@ -100,6 +100,8 @@ public:
 
 private:
 
+	void RegisterMeshes();
+
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 
 	void CreateDescriptorSetLayout();
@@ -110,7 +112,8 @@ private:
 	VkFormat FindDepthFormat();
 	VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 	bool HasStencilComponent(VkFormat format);
-	void CreateTextureImage();
+	void CreateTextureImages();
+	void CreateTextureImage(MeshResource& mesh);
 
 	void CreateImage(uint32_t width, 
 					 uint32_t height, 
@@ -130,8 +133,10 @@ private:
 							   uint32_t mip_levels);
 
 	void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-	void CreateTextureImageView();
-	void CreateTextureSampler();
+	void CreateTextureImageViews();
+	void CreateTextureImageView(MeshResource& mesh);
+	void CreateTextureSamplers();
+	void CreateTextureSampler(MeshResource& mesh);
 	void LoadModel();
 	void CreateVertexBuffer();
 	void CreateIndexBuffer();
@@ -148,6 +153,8 @@ private:
 	uint32_t FindMemoryType(uint32_t type_filter, VkMemoryPropertyFlags properties);
 	void CreateDescriptorPool();
 	void CreateDescriptorSets();
+	void CreateDescriptorSet(MeshId mesh_id);
+
 	void CreateCommandBuffers();
 	void RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data, RenderBundle& render_bundle);
 	void CreateSyncObjects();
@@ -167,6 +174,8 @@ private:
 	GLFWwindow* _window = nullptr;
 	VulkanContext* _vulkan_context = nullptr;
 	Swapchain* _swapchain = nullptr;
+
+	std::unordered_map<MeshId, MeshResource> _meshes;
 
 	VkInstance _instance;
 	VkDebugUtilsMessengerEXT _debug_messenger;
@@ -188,7 +197,7 @@ private:
 	std::vector<VkDeviceMemory> _uniform_buffers_memory;
 	std::vector<void*> _uniform_buffers_mapped;
 	VkDescriptorPool _descriptor_pool;
-	std::vector<VkDescriptorSet> _descriptor_sets;
+	std::vector<std::vector<VkDescriptorSet>> _descriptor_sets;
 	VkImage _texture_image;
 	VkDeviceMemory _texture_image_memory;
 	VkImageView _texture_image_view;

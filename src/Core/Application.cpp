@@ -77,7 +77,8 @@ void Application::InitRegistry()
 	Entity entity = _registry.CreateEntity();
 
 	_registry.AddComponent<TransformComponent>(entity, TransformComponent{});
-	_registry.AddComponent<MeshComponent>(entity, MeshComponent{ 0 });
+	_registry.AddComponent<MeshComponent>(entity, MeshComponent{ .mesh_id = 0 });
+	_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 0 });
 	auto& transform = _registry.GetComponent<TransformComponent>(entity);
 	//transform.position.x += 0.5f;
 
@@ -86,7 +87,8 @@ void Application::InitRegistry()
 	Entity entity = _registry.CreateEntity();
 
 	_registry.AddComponent<TransformComponent>(entity, TransformComponent{});
-	_registry.AddComponent<MeshComponent>(entity, MeshComponent{ 1 });
+	_registry.AddComponent<MeshComponent>(entity, MeshComponent{ .mesh_id = 1 });
+	_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 1 });
 	auto& transform = _registry.GetComponent<TransformComponent>(entity);
 	//transform.position.x -= 0.5f;
 	}
@@ -103,15 +105,17 @@ RenderBundle Application::ExtractRenderBundle(Registry& registry)
 {
 	std::vector<RenderItem> render_items;
 
-	for (Entity entity : registry.View<MeshComponent, TransformComponent>()) {
+	for (Entity entity : registry.View<MeshComponent, TransformComponent, MaterialComponent>()) {
 		auto& mesh = registry.GetComponent<MeshComponent>(entity);
 		auto& transform = registry.GetComponent<TransformComponent>(entity);
+		auto& material = registry.GetComponent<MaterialComponent>(entity);
+
 		if (entity.id == 0)
 			transform.position.x += 0.0001f;
 		else 
 			transform.position.y += 0.0001f;
 			
-		render_items.push_back({mesh, transform});
+		render_items.push_back({mesh.mesh_id, material.material_id, transform});
 		std::cout << "entity_id:  " << entity.id << std::endl;
 	}
 	std::cout << "render_items size:  " << render_items.size() << std::endl;

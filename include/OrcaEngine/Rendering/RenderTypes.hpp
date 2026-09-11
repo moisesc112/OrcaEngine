@@ -2,6 +2,8 @@
 
 #include <OrcaEngine/ECS/Components/MeshComponent.hpp>
 #include <OrcaEngine/ECS/Components/TransformComponent.hpp>
+#include <OrcaEngine/ECS/Components/MaterialComponent.hpp> 
+
 #include <OrcaEngine/Rendering/Vertex.hpp>
 
 #include <vulkan/vulkan_raii.hpp>
@@ -12,9 +14,12 @@
 #include <cstdint>
 
 using MeshId = std::uint32_t;
+using MaterialId = std::uint32_t;
+using TextureId = std::uint32_t;
 
 struct RenderItem {
-	MeshComponent mesh;
+    MeshId mesh_id;
+    MaterialId material_id;
 	TransformComponent transform;
 };
 
@@ -28,7 +33,6 @@ struct PushConstantData {
 
 struct MeshResource {
     std::string model_path;
-    std::string texture_path;
 
     std::vector<Vertex> vertices;
     std::vector<std::uint32_t> indices;
@@ -38,11 +42,19 @@ struct MeshResource {
 
     VkBuffer index_buffer = VK_NULL_HANDLE;
     VkDeviceMemory index_buffer_memory = VK_NULL_HANDLE;
+};
+
+struct MaterialResource {
+    TextureId texture_id;
+};
+
+struct TextureResource {
+    std::string texture_path;
 
     VkImage texture_image = VK_NULL_HANDLE;
     VkDeviceMemory texture_image_memory = VK_NULL_HANDLE;
     VkImageView texture_image_view = VK_NULL_HANDLE;
     VkSampler texture_sampler = VK_NULL_HANDLE;
 
-    std::uint32_t mip_levels;
+    std::uint32_t mip_levels = 1;
 };

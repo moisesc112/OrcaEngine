@@ -29,6 +29,8 @@ void Renderer::Initialize(GLFWwindow* window, VulkanContext* vulkan_context, Swa
 	_swapchain = swapchain;
 
 	RegisterMeshes();
+	RegisterTextures();
+	RegisterMaterials();
 
 	CreateDescriptorSetLayout();
 	CreateGraphicsPipeline();
@@ -65,12 +67,12 @@ void Renderer::Shutdown()
 {
 	const VkDevice device = _vulkan_context->GetLogicalDevice();
 
-	for (auto& [mesh_id, mesh] : _meshes) {
-		vkDestroySampler(device, mesh.texture_sampler, nullptr);
-		vkDestroyImageView(device, mesh.texture_image_view, nullptr);
+	for (auto& [texture_id, texture] : _textures) {
+		vkDestroySampler(device, texture.texture_sampler, nullptr);
+		vkDestroyImageView(device, texture.texture_image_view, nullptr);
 
-		vkDestroyImage(device, mesh.texture_image, nullptr);
-		vkFreeMemory(device, mesh.texture_image_memory, nullptr);
+		vkDestroyImage(device, texture.texture_image, nullptr);
+		vkFreeMemory(device, texture.texture_image_memory, nullptr);
 	}
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -107,11 +109,20 @@ void Renderer::Shutdown()
 
 void Renderer::RegisterMeshes()
 {
-	_meshes[0] = {"C:/Users/moise/Documents/VS_projects/OrcaEngine/models/viking_room.obj",
-				  "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/viking_room.png"};
+	_meshes[0] = { .model_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/viking_room.obj" };
+	_meshes[1] = { .model_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/iron_golem.obj" };
+}
 
-	_meshes[1] = {"C:/Users/moise/Documents/VS_projects/OrcaEngine/models/iron_golem.obj",
-				  "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/iron_golem.png"};
+void Renderer::RegisterTextures()
+{
+	_textures[0] = { .texture_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/viking_room.png" };
+	_textures[1] = { .texture_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/iron_golem.png" };
+}
+
+void Renderer::RegisterMaterials()
+{
+	_materials[0] = { .texture_id = 0 };
+	_materials[1] = { .texture_id = 1};
 }
 
 QueueFamilyIndices Renderer::FindQueueFamilies(VkPhysicalDevice device) 
@@ -482,14 +493,14 @@ bool Renderer::HasStencilComponent(VkFormat format)
 
 void Renderer::CreateTextureImages()
 {
-	for (auto& [mesh_id, mesh] : _meshes) {
-		CreateTextureImage(mesh);
+	for (auto& [texture_id, texture] : _textures) {
+		CreateTextureImage(texture);
 	}
 }
 
-void Renderer::CreateTextureImage(MeshResource& mesh) {
+void Renderer::CreateTextureImage(TextureResource& texture) {
 	int tex_width, tex_height, tex_channels;
-	stbi_uc* pixels = stbi_load(mesh.texture_path.c_str(), 
+	stbi_uc* pixels = stbi_load(texture.texture_path.c_str(), 
 								&tex_width, 
 								&tex_height,
 								&tex_channels, 
@@ -501,7 +512,7 @@ void Renderer::CreateTextureImage(MeshResource& mesh) {
 		throw std::runtime_error("failed to load texture image!");
 	}
 
-	mesh.mip_levels = static_cast<uint32_t>
+	texture.mip_levels = static_cast<uint32_t>
 				  (std::floor(std::log2(std::max(tex_width, tex_height)))) 
 				  + 1;
 
@@ -525,7 +536,7 @@ void Renderer::CreateTextureImage(MeshResource& mesh) {
 
 	CreateImage(tex_width, 
 				tex_height, 
-				mesh.mip_levels, 
+				texture.mip_levels, 
 				VK_SAMPLE_COUNT_1_BIT, 
 				VK_FORMAT_R8G8B8A8_SRGB, 
 				VK_IMAGE_TILING_OPTIMAL, 
@@ -533,17 +544,17 @@ void Renderer::CreateTextureImage(MeshResource& mesh) {
 				VK_IMAGE_USAGE_TRANSFER_DST_BIT | 
 				VK_IMAGE_USAGE_SAMPLED_BIT, 
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-				mesh.texture_image, 
-				mesh.texture_image_memory);
+				texture.texture_image, 
+				texture.texture_image_memory);
 
-	TransitionImageLayout(mesh.texture_image, 
+	TransitionImageLayout(texture.texture_image, 
 						  VK_FORMAT_R8G8B8A8_SRGB, 
 						  VK_IMAGE_LAYOUT_UNDEFINED, 
 						  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
-						  mesh.mip_levels);
+						  texture.mip_levels);
 
 	CopyBufferToImage(staging_buffer, 
-					  mesh.texture_image, 
+					  texture.texture_image, 
 					  static_cast<uint32_t>(tex_width), 
 					  static_cast<uint32_t>(tex_height));
 	//transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
@@ -551,11 +562,11 @@ void Renderer::CreateTextureImage(MeshResource& mesh) {
 	vkDestroyBuffer(device, staging_buffer, nullptr);
 	vkFreeMemory(device, staging_buffer_memory, nullptr);
 
-	GenerateMipmaps(mesh.texture_image, 
+	GenerateMipmaps(texture.texture_image, 
 					VK_FORMAT_R8G8B8A8_SRGB, 
 					tex_width, 
 					tex_height, 
-					mesh.mip_levels);
+					texture.mip_levels);
 }
 
 void Renderer::CreateImage(uint32_t width, 
@@ -699,28 +710,28 @@ void Renderer::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width,
 
 void Renderer::CreateTextureImageViews() 
 {
-	for (auto& [mesh_id, mesh] : _meshes) {
-		CreateTextureImageView(mesh);
+	for (auto& [texture_id, texture] : _textures) {
+		CreateTextureImageView(texture);
 	}
 }
 
-void Renderer::CreateTextureImageView(MeshResource& mesh) 
+void Renderer::CreateTextureImageView(TextureResource& texture) 
 {
-	mesh.texture_image_view = VulkanUtils::CreateImageView(_vulkan_context->GetLogicalDevice(), 
-													   mesh.texture_image, 
+	texture.texture_image_view = VulkanUtils::CreateImageView(_vulkan_context->GetLogicalDevice(), 
+													   texture.texture_image, 
 													   VK_FORMAT_R8G8B8A8_SRGB, 
 													   VK_IMAGE_ASPECT_COLOR_BIT, 
-													   mesh.mip_levels);
+													   texture.mip_levels);
 }
 
 void Renderer::CreateTextureSamplers()
 {
-	for (auto& [mesh_id, mesh] : _meshes) {
-		CreateTextureSampler(mesh);
+	for (auto& [texture_id, texture] : _textures) {
+		CreateTextureSampler(texture);
 	}
 }
 
-void Renderer::CreateTextureSampler(MeshResource& mesh) 
+void Renderer::CreateTextureSampler(TextureResource& texture) 
 {
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(_vulkan_context->GetPhysicalDevice(), &properties);
@@ -743,7 +754,7 @@ void Renderer::CreateTextureSampler(MeshResource& mesh)
 	sampler_info.minLod = 0.0f;
 	sampler_info.maxLod = VK_LOD_CLAMP_NONE;
 
-	if (vkCreateSampler(_vulkan_context->GetLogicalDevice(), &sampler_info, nullptr, &mesh.texture_sampler) != VK_SUCCESS) {
+	if (vkCreateSampler(_vulkan_context->GetLogicalDevice(), &sampler_info, nullptr, &texture.texture_sampler) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");
 	}
 }
@@ -970,7 +981,7 @@ uint32_t Renderer::FindMemoryType(uint32_t type_filter, VkMemoryPropertyFlags pr
 
 void Renderer::CreateDescriptorPool() 
 {
-	uint32_t descriptor_count = MAX_FRAMES_IN_FLIGHT * static_cast<uint32_t>(_meshes.size());
+	uint32_t descriptor_count = MAX_FRAMES_IN_FLIGHT * static_cast<uint32_t>(_materials.size());
 
 	std::array<VkDescriptorPoolSize, 2> pool_sizes{};
 	pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -993,9 +1004,9 @@ void Renderer::CreateDescriptorSets()
 {
 	const VkDevice device = _vulkan_context->GetLogicalDevice();
 
-	_descriptor_sets.resize(_meshes.size());
+	_descriptor_sets.resize(_materials.size());
 
-	for (auto& [mesh_id, mesh] : _meshes) {
+	for (auto& [material_id, material] : _materials) {
 		
 		std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, _descriptor_set_layout);
 		VkDescriptorSetAllocateInfo alloc_info{};
@@ -1004,18 +1015,21 @@ void Renderer::CreateDescriptorSets()
 		alloc_info.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 		alloc_info.pSetLayouts = layouts.data();
 
-		_descriptor_sets[mesh_id].resize(MAX_FRAMES_IN_FLIGHT);
-		if (vkAllocateDescriptorSets(device, &alloc_info, _descriptor_sets[mesh_id].data()) != VK_SUCCESS) {
+		_descriptor_sets[material_id].resize(MAX_FRAMES_IN_FLIGHT);
+		if (vkAllocateDescriptorSets(device, &alloc_info, _descriptor_sets[material_id].data()) != VK_SUCCESS) {
 			throw std::runtime_error("failed to allocate descriptor sets");
 		}
 
-		CreateDescriptorSet(mesh_id);
+		CreateDescriptorSet(material_id);
 	}
 }
 
-void Renderer::CreateDescriptorSet(MeshId mesh_id) 
+void Renderer::CreateDescriptorSet(MaterialId material_id) 
 {
 	const VkDevice device = _vulkan_context->GetLogicalDevice();
+
+	const MaterialResource& material = _materials.at(material_id);
+	const TextureResource& texture = _textures.at(material.texture_id);
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		VkDescriptorBufferInfo buffer_info{};
@@ -1025,13 +1039,13 @@ void Renderer::CreateDescriptorSet(MeshId mesh_id)
 
 		VkDescriptorImageInfo image_info{};
 		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		image_info.imageView = _meshes.at(mesh_id).texture_image_view;
-		image_info.sampler = _meshes.at(mesh_id).texture_sampler;
+		image_info.imageView = texture.texture_image_view;
+		image_info.sampler = texture.texture_sampler;
 
 		std::array<VkWriteDescriptorSet, 2> descriptor_writes{};
 
 		descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptor_writes[0].dstSet = _descriptor_sets[mesh_id][i];
+		descriptor_writes[0].dstSet = _descriptor_sets[material_id][i];
 		descriptor_writes[0].dstBinding = 0;
 		descriptor_writes[0].dstArrayElement = 0;
 		descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1039,7 +1053,7 @@ void Renderer::CreateDescriptorSet(MeshId mesh_id)
 		descriptor_writes[0].pBufferInfo = &buffer_info;
 
 		descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptor_writes[1].dstSet = _descriptor_sets[mesh_id][i];
+		descriptor_writes[1].dstSet = _descriptor_sets[material_id][i];
 		descriptor_writes[1].dstBinding = 1;
 		descriptor_writes[1].dstArrayElement = 0;
 		descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1150,7 +1164,8 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 
 	for (const RenderItem& render_item : render_bundle.render_items) {
 
-		auto& mesh = _meshes.at(render_item.mesh.mesh_id);
+		auto& mesh = _meshes.at(render_item.mesh_id);
+		auto& material = _materials.at(render_item.material_id);
 
 		VkBuffer vertex_buffers[] = { mesh.vertex_buffer };
 		VkDeviceSize offsets[] = { 0 };
@@ -1160,7 +1175,7 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 		//model_matrix = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		model_matrix = glm::rotate(model_matrix, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		model_matrix = glm::rotate(model_matrix, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		if (render_item.mesh.mesh_id == 1) {
+		if (render_item.mesh_id == 1) {
 			model_matrix = glm::scale(model_matrix, glm::vec3(0.05f));
 		}
 		//ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -1174,7 +1189,7 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 
 		vkCmdBindIndexBuffer(command_buffer, mesh.index_buffer, 0, VK_INDEX_TYPE_UINT32);
 
-		VkDescriptorSet descriptor_set = _descriptor_sets[render_item.mesh.mesh_id][_current_frame];
+		VkDescriptorSet descriptor_set = _descriptor_sets[render_item.material_id][_current_frame];
 
 		vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 

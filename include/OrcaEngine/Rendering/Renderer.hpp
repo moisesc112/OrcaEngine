@@ -52,6 +52,8 @@ public:
 private:
 
 	void RegisterMeshes();
+	void RegisterTextures();
+	void RegisterMaterials();
 
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 
@@ -63,8 +65,9 @@ private:
 	VkFormat FindDepthFormat();
 	VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 	bool HasStencilComponent(VkFormat format);
+
 	void CreateTextureImages();
-	void CreateTextureImage(MeshResource& mesh);
+	void CreateTextureImage(TextureResource& texture);
 
 	void CreateImage(uint32_t width, 
 					 uint32_t height, 
@@ -86,10 +89,10 @@ private:
 	void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
 	void CreateTextureImageViews();
-	void CreateTextureImageView(MeshResource& mesh);
+	void CreateTextureImageView(TextureResource& texture);
 
 	void CreateTextureSamplers();
-	void CreateTextureSampler(MeshResource& mesh);
+	void CreateTextureSampler(TextureResource& texture);
 
 	void LoadModels();
 	void LoadModel(MeshResource& mesh);
@@ -112,8 +115,9 @@ private:
 	void CopyBuffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
 	uint32_t FindMemoryType(uint32_t type_filter, VkMemoryPropertyFlags properties);
 	void CreateDescriptorPool();
+
 	void CreateDescriptorSets();
-	void CreateDescriptorSet(MeshId mesh_id);
+	void CreateDescriptorSet(MaterialId material_id);
 
 	void CreateCommandBuffers();
 	void RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data, RenderBundle& render_bundle);
@@ -136,6 +140,8 @@ private:
 	Swapchain* _swapchain = nullptr;
 
 	std::unordered_map<MeshId, MeshResource> _meshes;
+	std::unordered_map<TextureId, TextureResource> _textures;
+	std::unordered_map<MaterialId, MaterialResource> _materials;
 
 	VkInstance _instance;
 	VkDebugUtilsMessengerEXT _debug_messenger;

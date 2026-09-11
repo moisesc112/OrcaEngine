@@ -105,8 +105,8 @@ void EditorUI::DrawDebugPanel()
 
     ImGui::SeparatorText("Rendering");
 
-    ImGui::Text("Vertices: %u", _renderer->GetVertices().size());
-    ImGui::Text("Triangles: %u", _renderer->GetIndices().size() / 3);
+    //ImGui::Text("Vertices: %u", _renderer->GetVertices().size());
+    //ImGui::Text("Triangles: %u", _renderer->GetIndices().size() / 3);
     ImGui::Text("Draw Calls: %u", _renderer->GetDrawCallCounter());
 
     ImGui::SeparatorText("Vulkan");

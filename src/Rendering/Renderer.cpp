@@ -38,9 +38,9 @@ void Renderer::Initialize(GLFWwindow* window, VulkanContext* vulkan_context, Swa
 	CreateTextureImages();
 	CreateTextureImageViews();
 	CreateTextureSamplers();
-	LoadModel();
-	CreateVertexBuffer();
-	CreateIndexBuffer();
+	LoadModels();
+	CreateVertexBuffers();
+	CreateIndexBuffers();
 	CreateUniformBuffers();
 	CreateDescriptorPool();
 	CreateDescriptorSets();
@@ -82,11 +82,13 @@ void Renderer::Shutdown()
 
 	vkDestroyDescriptorSetLayout(device, _descriptor_set_layout, nullptr);
 
-	vkDestroyBuffer(device, _index_buffer, nullptr);
-	vkFreeMemory(device, _index_buffer_memory, nullptr);
+	for (auto& [mesh_id, mesh] : _meshes) {
+		vkDestroyBuffer(device, mesh.index_buffer, nullptr);
+		vkFreeMemory(device, mesh.index_buffer_memory, nullptr);
 
-	vkDestroyBuffer(device, _vertex_buffer, nullptr);
-	vkFreeMemory(device, _vertex_buffer_memory, nullptr);
+		vkDestroyBuffer(device, mesh.vertex_buffer, nullptr);
+		vkFreeMemory(device, mesh.vertex_buffer_memory, nullptr);
+	}
 
 	vkDestroyPipeline(device, _graphics_pipeline, nullptr);
 	vkDestroyPipelineLayout(device, _pipeline_layout, nullptr);
@@ -499,7 +501,7 @@ void Renderer::CreateTextureImage(MeshResource& mesh) {
 		throw std::runtime_error("failed to load texture image!");
 	}
 
-	_mip_levels = static_cast<uint32_t>
+	mesh.mip_levels = static_cast<uint32_t>
 				  (std::floor(std::log2(std::max(tex_width, tex_height)))) 
 				  + 1;
 
@@ -523,7 +525,7 @@ void Renderer::CreateTextureImage(MeshResource& mesh) {
 
 	CreateImage(tex_width, 
 				tex_height, 
-				_mip_levels, 
+				mesh.mip_levels, 
 				VK_SAMPLE_COUNT_1_BIT, 
 				VK_FORMAT_R8G8B8A8_SRGB, 
 				VK_IMAGE_TILING_OPTIMAL, 
@@ -538,7 +540,7 @@ void Renderer::CreateTextureImage(MeshResource& mesh) {
 						  VK_FORMAT_R8G8B8A8_SRGB, 
 						  VK_IMAGE_LAYOUT_UNDEFINED, 
 						  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
-						  _mip_levels);
+						  mesh.mip_levels);
 
 	CopyBufferToImage(staging_buffer, 
 					  mesh.texture_image, 
@@ -553,7 +555,7 @@ void Renderer::CreateTextureImage(MeshResource& mesh) {
 					VK_FORMAT_R8G8B8A8_SRGB, 
 					tex_width, 
 					tex_height, 
-					_mip_levels);
+					mesh.mip_levels);
 }
 
 void Renderer::CreateImage(uint32_t width, 
@@ -708,7 +710,7 @@ void Renderer::CreateTextureImageView(MeshResource& mesh)
 													   mesh.texture_image, 
 													   VK_FORMAT_R8G8B8A8_SRGB, 
 													   VK_IMAGE_ASPECT_COLOR_BIT, 
-													   _mip_levels);
+													   mesh.mip_levels);
 }
 
 void Renderer::CreateTextureSamplers()
@@ -746,14 +748,21 @@ void Renderer::CreateTextureSampler(MeshResource& mesh)
 	}
 }
 
-void Renderer::LoadModel() 
+void Renderer::LoadModels() 
+{
+	for (auto& [mesh_id, mesh] : _meshes) {
+		LoadModel(mesh);
+	}
+}
+
+void Renderer::LoadModel(MeshResource& mesh) 
 {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
 	std::string warn, err;
 
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, _meshes[0].model_path.c_str())) {
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, mesh.model_path.c_str())) {
 		throw std::runtime_error(err);
 	}
 
@@ -777,20 +786,27 @@ void Renderer::LoadModel()
 			vertex.color = { 1.0f, 1.0f, 1.0f };
 
 			if (uniqueVertices.count(vertex) == 0) {
-				uniqueVertices[vertex] = static_cast<uint32_t>(_vertices.size());
-				_vertices.push_back(vertex);
+				uniqueVertices[vertex] = static_cast<uint32_t>(mesh.vertices.size());
+				mesh.vertices.push_back(vertex);
 			}
 
-			_indices.push_back(uniqueVertices[vertex]);
+			mesh.indices.push_back(uniqueVertices[vertex]);
 		}
 	}
 }
 
-void Renderer::CreateVertexBuffer() 
+void Renderer::CreateVertexBuffers()
+{
+	for (auto& [mesh_id, mesh] : _meshes) {
+		CreateVertexBuffer(mesh);
+	}
+}
+
+void Renderer::CreateVertexBuffer(MeshResource& mesh) 
 {
 	const VkDevice device = _vulkan_context->GetLogicalDevice();
 
-	VkDeviceSize buffer_size = sizeof(_vertices[0]) * _vertices.size();
+	VkDeviceSize buffer_size = sizeof(mesh.vertices[0]) * mesh.vertices.size();
 
 	VkBuffer staging_buffer;
 	VkDeviceMemory staging_buffer_memory;
@@ -798,22 +814,30 @@ void Renderer::CreateVertexBuffer()
 
 	void* data;
 	vkMapMemory(device, staging_buffer_memory, 0, buffer_size, 0, &data);
-	memcpy(data, _vertices.data(), (size_t)buffer_size);
+	memcpy(data, mesh.vertices.data(), (size_t)buffer_size);
 	vkUnmapMemory(device, staging_buffer_memory);
 
-	CreateBuffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _vertex_buffer, _vertex_buffer_memory);
+	CreateBuffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.vertex_buffer, mesh.vertex_buffer_memory);
 
-	CopyBuffer(staging_buffer, _vertex_buffer, buffer_size);
+	CopyBuffer(staging_buffer, mesh.vertex_buffer, buffer_size);
 
 	vkDestroyBuffer(device, staging_buffer, nullptr);
 	vkFreeMemory(device, staging_buffer_memory, nullptr);
 }
 
-void Renderer::CreateIndexBuffer() 
+void Renderer::CreateIndexBuffers()
+{
+	for (auto& [mesh_id, mesh] : _meshes) {
+		CreateIndexBuffer(mesh);
+	}
+}
+
+
+void Renderer::CreateIndexBuffer(MeshResource& mesh) 
 {
 	const VkDevice device = _vulkan_context->GetLogicalDevice();
 
-	VkDeviceSize buffer_size = sizeof(_indices[0]) * _indices.size();
+	VkDeviceSize buffer_size = sizeof(mesh.indices[0]) * mesh.indices.size();
 
 	VkBuffer staging_buffer;
 	VkDeviceMemory staging_buffer_memory;
@@ -821,12 +845,12 @@ void Renderer::CreateIndexBuffer()
 
 	void* data;
 	vkMapMemory(device, staging_buffer_memory, 0, buffer_size, 0, &data);
-	memcpy(data, _indices.data(), (size_t)buffer_size);
+	memcpy(data, mesh.indices.data(), (size_t)buffer_size);
 	vkUnmapMemory(device, staging_buffer_memory);
 
-	CreateBuffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _index_buffer, _index_buffer_memory);
+	CreateBuffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.index_buffer, mesh.index_buffer_memory);
 
-	CopyBuffer(staging_buffer, _index_buffer, buffer_size);
+	CopyBuffer(staging_buffer, mesh.index_buffer, buffer_size);
 
 	vkDestroyBuffer(device, staging_buffer, nullptr);
 	vkFreeMemory(device, staging_buffer_memory, nullptr);
@@ -1124,17 +1148,21 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 	scissor.extent = _swapchain->GetExtent();
 	vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
-	VkBuffer vertex_buffers[] = { _vertex_buffer };
-	VkDeviceSize offsets[] = { 0 };
-
 	for (const RenderItem& render_item : render_bundle.render_items) {
+
+		auto& mesh = _meshes.at(render_item.mesh.mesh_id);
+
+		VkBuffer vertex_buffers[] = { mesh.vertex_buffer };
+		VkDeviceSize offsets[] = { 0 };
 
 		glm::mat4 model_matrix(1.0f);
 		model_matrix = glm::translate(model_matrix, render_item.transform.position);
 		//model_matrix = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		model_matrix = glm::rotate(model_matrix, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		model_matrix = glm::rotate(model_matrix, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		//model_matrix = glm::scale(model_matrix, glm::vec3(0.05f));
+		if (render_item.mesh.mesh_id == 1) {
+			model_matrix = glm::scale(model_matrix, glm::vec3(0.05f));
+		}
 		//ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 		PushConstantData push_constants{};
@@ -1144,13 +1172,13 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 
 		vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffers, offsets);
 
-		vkCmdBindIndexBuffer(command_buffer, _index_buffer, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(command_buffer, mesh.index_buffer, 0, VK_INDEX_TYPE_UINT32);
 
 		VkDescriptorSet descriptor_set = _descriptor_sets[render_item.mesh.mesh_id][_current_frame];
 
 		vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
-		vkCmdDrawIndexed(command_buffer, static_cast<uint32_t>(_indices.size()), 1, 0, 0, 0);
+		vkCmdDrawIndexed(command_buffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
 		_draw_call_counter++;
 	}
 

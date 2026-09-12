@@ -49,10 +49,10 @@ private:
 	void InitEditorUI();
 	void InitRegistry();
 
-	RenderBundle ExtractRenderBundle(Registry& registry);
+	void UpdateScene();
+	void RenderFrame();
 
 	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
-
 
 	Window _window;
 	VulkanContext _vulkan_context;

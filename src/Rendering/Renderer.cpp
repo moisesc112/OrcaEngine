@@ -1170,18 +1170,8 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 		VkBuffer vertex_buffers[] = { mesh.vertex_buffer };
 		VkDeviceSize offsets[] = { 0 };
 
-		glm::mat4 model_matrix(1.0f);
-		model_matrix = glm::translate(model_matrix, render_item.transform.position);
-		//model_matrix = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		model_matrix = glm::rotate(model_matrix, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		model_matrix = glm::rotate(model_matrix, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		if (render_item.mesh_id == 1) {
-			model_matrix = glm::scale(model_matrix, glm::vec3(0.05f));
-		}
-		//ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-
 		PushConstantData push_constants{};
-		push_constants.model_matrix = model_matrix;
+		push_constants.model_matrix = render_item.model_matrix;
 
 		vkCmdPushConstants(command_buffer, _pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantData), &push_constants);
 

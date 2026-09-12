@@ -20,7 +20,7 @@ using TextureId = std::uint32_t;
 struct RenderItem {
     MeshId mesh_id;
     MaterialId material_id;
-	TransformComponent transform;
+    glm::mat4 model_matrix;
 };
 
 struct RenderBundle {

@@ -3,6 +3,8 @@
 #include <OrcaEngine/ECS/Components/TransformComponent.hpp>
 #include <OrcaEngine/ECS/Components/MeshComponent.hpp>
 
+#include <glm/glm.hpp>
+
 Application::Application() {}
 
 Application::~Application()
@@ -76,23 +78,24 @@ void Application::InitRegistry()
 	{
 	Entity entity = _registry.CreateEntity();
 
-	_registry.AddComponent<TransformComponent>(entity, TransformComponent{});
+	_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(0.0f),
+																		   .rotation = glm::vec3(0.0f),
+																		   .scale = glm::vec3(1.0f) });
+
 	_registry.AddComponent<MeshComponent>(entity, MeshComponent{ .mesh_id = 0 });
 	_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 0 });
-	auto& transform = _registry.GetComponent<TransformComponent>(entity);
-	//transform.position.x += 0.5f;
-
 	}
+
 	{
 	Entity entity = _registry.CreateEntity();
 
-	_registry.AddComponent<TransformComponent>(entity, TransformComponent{});
+	_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(-1.0f, 1.0f, 0.0f),
+																		   .rotation = glm::vec3(90.0f, -90.0f, 0.0f),
+																		   .scale = glm::vec3(0.05f) });
+
 	_registry.AddComponent<MeshComponent>(entity, MeshComponent{ .mesh_id = 1 });
 	_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 1 });
-	auto& transform = _registry.GetComponent<TransformComponent>(entity);
-	//transform.position.x -= 0.5f;
 	}
-	//auto& transform = _registry.GetComponent<TransformComponent>(_entity);
 }
 
 void Application::InitEditorUI()
@@ -110,18 +113,21 @@ RenderBundle Application::ExtractRenderBundle(Registry& registry)
 		auto& transform = registry.GetComponent<TransformComponent>(entity);
 		auto& material = registry.GetComponent<MaterialComponent>(entity);
 
-		if (entity.id == 0)
-			transform.position.x += 0.0001f;
-		else 
-			transform.position.y += 0.0001f;
-			
-		render_items.push_back({mesh.mesh_id, material.material_id, transform});
-		std::cout << "entity_id:  " << entity.id << std::endl;
+		glm::mat4 model_matrix(1.0f);
+
+		model_matrix = glm::translate(model_matrix, transform.position);
+
+		model_matrix = glm::rotate(model_matrix, glm::radians(transform.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		model_matrix = glm::rotate(model_matrix, glm::radians(transform.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+		model_matrix = glm::rotate(model_matrix, glm::radians(transform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+
+		model_matrix = glm::scale(model_matrix, transform.scale);
+
+		render_items.push_back({mesh.mesh_id, material.material_id, model_matrix});
 	}
-	std::cout << "render_items size:  " << render_items.size() << std::endl;
 
 	RenderBundle render_bundle{render_items};
-
+	
 	return render_bundle;
 }
 

@@ -81,6 +81,8 @@ void EditorUI::BeginFrame()
 void EditorUI::Draw()
 {
     DrawDebugPanel();
+    DrawScenePanel();
+    DrawInspectorPanel();
 }
 
 void EditorUI::EndFrame()
@@ -95,7 +97,7 @@ ImDrawData* EditorUI::GetDrawData()
 
 void EditorUI::DrawDebugPanel()
 {
-    ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f), ImGuiCond_Appearing);
+    ImGui::SetNextWindowPos(ImVec2(10.0f, 300.0f), ImGuiCond_Appearing);
     ImGui::SetNextWindowSize(ImVec2(220.0f, 250.0f), ImGuiCond_Appearing);
 
     ImGui::Begin("Debug Options");
@@ -122,6 +124,27 @@ void EditorUI::DrawDebugPanel()
                 _registry->GetComponent<TransformComponent>(_selected_entity).position.y,
                 _registry->GetComponent<TransformComponent>(_selected_entity).position.z);
 
+    ImGui::End();
+}
+
+void EditorUI::DrawScenePanel()
+{
+    ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f), ImGuiCond_Appearing);
+    ImGui::SetNextWindowSize(ImVec2(220.0f, 250.0f), ImGuiCond_Appearing);
+    ImGui::Begin("Scene");
+
+    for (Entity entity : _registry->GetAliveEntities()) {
+        ImGui::Text("Entity: %u", entity.id);
+    }
+
+    ImGui::End();
+}
+
+void EditorUI::DrawInspectorPanel()
+{
+    ImGui::SetNextWindowPos(ImVec2(950.0f, 10.0f), ImGuiCond_Appearing);
+    ImGui::SetNextWindowSize(ImVec2(220.0f, 250.0f), ImGuiCond_Appearing);
+    ImGui::Begin("Inspector");
     ImGui::End();
 }
 

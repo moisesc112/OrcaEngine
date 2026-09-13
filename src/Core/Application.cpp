@@ -106,12 +106,12 @@ void Application::UpdateScene()
 {
 	{
 	auto& transform = _registry.GetComponent<TransformComponent>(static_cast<Entity>(0));
-		transform.position.x += 0.0001f;
+		//transform.position.x += 0.0001f;
 	}
 
 	{
 	auto& transform = _registry.GetComponent<TransformComponent>(static_cast<Entity>(1));
-		transform.position.y += 0.0001f;
+		//transform.position.y += 0.0001f;
 	}
 }
 

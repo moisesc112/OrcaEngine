@@ -84,6 +84,10 @@ public:
         return entities;
     }
 
+    std::vector<Entity>& GetAliveEntities() {
+        return _entity_manager.GetAliveEntities();
+    }
+
 private:
     template<typename T>
     ComponentPool<T>& GetOrCreatePool() 

@@ -36,6 +36,8 @@ public:
 
 private:
     void DrawDebugPanel();
+    void DrawScenePanel();
+    void DrawInspectorPanel();
 
     static void check_vk_result(VkResult err);
 

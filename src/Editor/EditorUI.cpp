@@ -6,8 +6,10 @@
 #include <OrcaEngine/ECS/Registry.hpp>
 
 #include <OrcaEngine/ECS/Components/TransformComponent.hpp>
+#include <OrcaEngine/ECS/Components/NameComponent.hpp>
 
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -116,14 +118,6 @@ void EditorUI::DrawDebugPanel()
     ImGui::Text("Resolution: %u x %u", _swapchain->GetExtent().width, _swapchain->GetExtent().height);
     ImGui::Text("MSAA: %ux", _vulkan_context->GetMsaaSamples());
 
-    ImGui::SeparatorText("Selected Entity");
-
-    ImGui::Text("Entity ID: %u", _selected_entity.id);
-    ImGui::Text("Position: (%.2f, %.2f, %.2f)", 
-                _registry->GetComponent<TransformComponent>(_selected_entity).position.x,
-                _registry->GetComponent<TransformComponent>(_selected_entity).position.y,
-                _registry->GetComponent<TransformComponent>(_selected_entity).position.z);
-
     ImGui::End();
 }
 
@@ -134,7 +128,19 @@ void EditorUI::DrawScenePanel()
     ImGui::Begin("Scene");
 
     for (Entity entity : _registry->GetAliveEntities()) {
-        ImGui::Text("Entity: %u", entity.id);
+
+        std::string entity_name = "Entity: " + std::to_string(entity.id);
+
+        if (_registry->HasComponent<NameComponent>(entity)) {
+            entity_name = _registry->GetComponent<NameComponent>(entity).name;
+        }
+
+        bool selected = false;
+
+        if (ImGui::Selectable(entity_name.c_str(), selected)) {
+            selected = !selected;
+            SetSelectedEntity(entity);
+        }
     }
 
     ImGui::End();
@@ -145,6 +151,24 @@ void EditorUI::DrawInspectorPanel()
     ImGui::SetNextWindowPos(ImVec2(950.0f, 10.0f), ImGuiCond_Appearing);
     ImGui::SetNextWindowSize(ImVec2(220.0f, 250.0f), ImGuiCond_Appearing);
     ImGui::Begin("Inspector");
+
+    if (_selected_entity && _registry->IsAlive(*_selected_entity)) {
+        std::string entity_name = _registry->GetComponent<NameComponent>(*_selected_entity).name;
+        ImGui::Text(entity_name.c_str());
+
+        ImGui::SeparatorText("Transform");
+
+        auto& entity_transform = _registry->GetComponent<TransformComponent>(*_selected_entity);
+        ImGui::SliderFloat3("Position", &entity_transform.position.x, -2.0f, 2.0f);
+        ImGui::SliderFloat3("Rotation", &entity_transform.rotation.x, -360.0f, 360.0f);
+        ImGui::SliderFloat3("Scale", &entity_transform.scale.x, 0.0f, 2.0f);
+
+        ImGui::SeparatorText("Material");
+    }
+    else {
+        _selected_entity.reset();
+    }
+
     ImGui::End();
 }
 

@@ -4,6 +4,8 @@
 
 #include <vulkan/vulkan_raii.hpp>
 
+#include <optional>
+
 class Window;
 class VulkanContext;
 class Swapchain;
@@ -46,5 +48,5 @@ private:
     Renderer* _renderer = nullptr;
     Registry* _registry = nullptr;
 
-    Entity _selected_entity;
+    std::optional<Entity> _selected_entity;
 };

@@ -3,6 +3,7 @@
 
 #include <OrcaEngine/ECS/Components/TransformComponent.hpp>
 #include <OrcaEngine/ECS/Components/MeshComponent.hpp>
+#include <OrcaEngine/ECS/Components/NameComponent.hpp>
 
 #include <glm/glm.hpp>
 
@@ -76,6 +77,7 @@ void Application::InitRegistry()
 	{
 	Entity entity = _registry.CreateEntity();
 
+	_registry.AddComponent<NameComponent>(entity, NameComponent{ .name = "Viking Room" });
 	_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(0.0f),
 																		   .rotation = glm::vec3(0.0f),
 																		   .scale = glm::vec3(1.0f) });
@@ -87,6 +89,7 @@ void Application::InitRegistry()
 	{
 	Entity entity = _registry.CreateEntity();
 
+	_registry.AddComponent<NameComponent>(entity, NameComponent{ .name = "Iron Golem" });
 	_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(-1.0f, 1.0f, 0.0f),
 																		   .rotation = glm::vec3(90.0f, -90.0f, 0.0f),
 																		   .scale = glm::vec3(0.05f) });
@@ -99,7 +102,7 @@ void Application::InitRegistry()
 void Application::InitEditorUI()
 {
 	_editor_ui.Initialize(_window.GetHandle(), &_vulkan_context, &_swapchain, &_renderer, &_registry);
-	_editor_ui.SetSelectedEntity(_entity);
+	//_editor_ui.SetSelectedEntity(_entity);
 }
 
 void Application::UpdateScene()

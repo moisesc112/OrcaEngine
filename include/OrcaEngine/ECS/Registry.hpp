@@ -88,6 +88,10 @@ public:
         return _entity_manager.GetAliveEntities();
     }
 
+    bool IsAlive(Entity entity) {
+        return _entity_manager.IsEntityAlive(entity);
+    }
+
 private:
     template<typename T>
     ComponentPool<T>& GetOrCreatePool() 

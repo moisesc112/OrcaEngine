@@ -1376,7 +1376,7 @@ void Renderer::UpdateUniformBuffer(uint32_t current_image)
 
 	UniformBufferObject ubo{};
 	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.proj = glm::perspective(glm::radians(45.0f), _swapchain->GetExtent().width / (float)_swapchain->GetExtent().height, 0.1f, 10.0f);
+	ubo.proj = glm::perspective(glm::radians(45.0f), _viewport_extent.width / (float)_viewport_extent.height, 0.1f, 10.0f);
 	ubo.proj[1][1] *= -1;
 
 	memcpy(_uniform_buffers_mapped[current_image], &ubo, sizeof(ubo));

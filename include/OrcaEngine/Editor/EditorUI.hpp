@@ -41,6 +41,7 @@ public:
     VkExtent2D& GetViewportExtent() { return _viewport_extent; }
 
 private:
+    void DrawDockSpace();
     void DrawDebugPanel();
     void DrawScenePanel();
     void DrawInspectorPanel();

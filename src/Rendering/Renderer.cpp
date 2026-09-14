@@ -206,7 +206,12 @@ void Renderer::DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, 
 	vkResetCommandBuffer(_command_buffers[_current_frame], 0);
 	RecordCommandBuffer(_command_buffers[_current_frame], image_index, imgui_draw_data, render_bundle, viewport_extent);
 
-	UpdateUniformBuffer(_current_frame);
+	if (viewport_extent.width > 0 &&
+		viewport_extent.height > 0 &&
+		_viewport_image != VK_NULL_HANDLE)
+	{
+		UpdateUniformBuffer(_current_frame);
+	}
 
 	VkSubmitInfo submit_info{};
 	submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1111,139 +1116,144 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 		throw std::runtime_error("failed to begin recording command buffer!");
 	}
 
-	VkImageMemoryBarrier2 viewport_to_color_barrier{};
-	viewport_to_color_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+	if (viewport_extent.width > 0 &&
+		viewport_extent.height > 0 &&
+		_viewport_image != VK_NULL_HANDLE) 
+	{
+		VkImageMemoryBarrier2 viewport_to_color_barrier{};
+		viewport_to_color_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
 
-	if (_viewport_image_layout == VK_IMAGE_LAYOUT_UNDEFINED) {
-		viewport_to_color_barrier.srcStageMask = VK_PIPELINE_STAGE_2_NONE;
-		viewport_to_color_barrier.srcAccessMask = VK_ACCESS_2_NONE;
+		if (_viewport_image_layout == VK_IMAGE_LAYOUT_UNDEFINED) {
+			viewport_to_color_barrier.srcStageMask = VK_PIPELINE_STAGE_2_NONE;
+			viewport_to_color_barrier.srcAccessMask = VK_ACCESS_2_NONE;
+		}
+		else if (_viewport_image_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+			viewport_to_color_barrier.srcStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+			viewport_to_color_barrier.srcAccessMask = VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+		}
+
+		viewport_to_color_barrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+		viewport_to_color_barrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+		viewport_to_color_barrier.oldLayout = _viewport_image_layout;
+		viewport_to_color_barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		viewport_to_color_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		viewport_to_color_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		viewport_to_color_barrier.image = _viewport_image;
+		viewport_to_color_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		viewport_to_color_barrier.subresourceRange.baseMipLevel = 0;
+		viewport_to_color_barrier.subresourceRange.levelCount = 1;
+		viewport_to_color_barrier.subresourceRange.baseArrayLayer = 0;
+		viewport_to_color_barrier.subresourceRange.layerCount = 1;
+
+		VkDependencyInfo viewport_to_color_dependency{};
+		viewport_to_color_dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+		viewport_to_color_dependency.imageMemoryBarrierCount = 1;
+		viewport_to_color_dependency.pImageMemoryBarriers = &viewport_to_color_barrier;
+
+		vkCmdPipelineBarrier2(command_buffer, &viewport_to_color_dependency);
+
+		_viewport_image_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkRenderingAttachmentInfo color_attachment_info{};
+		color_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		color_attachment_info.imageView = _viewport_color_image_view;
+		color_attachment_info.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		color_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		color_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		color_attachment_info.clearValue.color = { 0.01f, 0.01f, 0.01f, 1 };
+		color_attachment_info.resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT;
+		color_attachment_info.resolveImageView = _viewport_image_view;
+		color_attachment_info.resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkRenderingAttachmentInfo depth_attachment_info{};
+		depth_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		depth_attachment_info.imageView = _viewport_depth_image_view;
+		depth_attachment_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+		depth_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depth_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depth_attachment_info.clearValue.depthStencil = { 1.0f, 0 };
+
+		VkRenderingInfo rendering_info{};
+		rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+		rendering_info.renderArea.offset = { 0, 0 };
+		rendering_info.renderArea.extent = viewport_extent;
+		rendering_info.layerCount = 1;
+		rendering_info.colorAttachmentCount = 1;
+		rendering_info.pColorAttachments = &color_attachment_info;
+		rendering_info.pDepthAttachment = &depth_attachment_info;
+
+		vkCmdBeginRendering(command_buffer, &rendering_info);
+
+		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _graphics_pipeline);
+
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = static_cast<float>(viewport_extent.width);
+		viewport.height = static_cast<float>(viewport_extent.height);
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+
+		VkRect2D scissor{};
+		scissor.offset = { 0, 0 };
+		scissor.extent = viewport_extent;
+		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+
+		for (const RenderItem& render_item : render_bundle.render_items) {
+
+			auto& mesh = _meshes.at(render_item.mesh_id);
+			auto& material = _materials.at(render_item.material_id);
+
+			VkBuffer vertex_buffers[] = { mesh.vertex_buffer };
+			VkDeviceSize offsets[] = { 0 };
+
+			PushConstantData push_constants{};
+			push_constants.model_matrix = render_item.model_matrix;
+
+			vkCmdPushConstants(command_buffer, _pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantData), &push_constants);
+
+			vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffers, offsets);
+
+			vkCmdBindIndexBuffer(command_buffer, mesh.index_buffer, 0, VK_INDEX_TYPE_UINT32);
+
+			VkDescriptorSet descriptor_set = _descriptor_sets[render_item.material_id][_current_frame];
+
+			vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+
+			vkCmdDrawIndexed(command_buffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
+			_draw_call_counter++;
+		}
+
+		//vkCmdEndRenderPass(commandBuffer);
+		vkCmdEndRendering(command_buffer);
+
+		VkImageMemoryBarrier2 viewport_to_shader_barrier{};
+		viewport_to_shader_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+		viewport_to_shader_barrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+		viewport_to_shader_barrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+		viewport_to_shader_barrier.dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+		viewport_to_shader_barrier.dstAccessMask = VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+		viewport_to_shader_barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		viewport_to_shader_barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		viewport_to_shader_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		viewport_to_shader_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		viewport_to_shader_barrier.image = _viewport_image;
+		viewport_to_shader_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		viewport_to_shader_barrier.subresourceRange.baseMipLevel = 0;
+		viewport_to_shader_barrier.subresourceRange.levelCount = 1;
+		viewport_to_shader_barrier.subresourceRange.baseArrayLayer = 0;
+		viewport_to_shader_barrier.subresourceRange.layerCount = 1;
+
+		VkDependencyInfo viewport_to_shader_dependency{};
+		viewport_to_shader_dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+		viewport_to_shader_dependency.imageMemoryBarrierCount = 1;
+		viewport_to_shader_dependency.pImageMemoryBarriers = &viewport_to_shader_barrier;
+
+		vkCmdPipelineBarrier2(command_buffer, &viewport_to_shader_dependency);
+
+		_viewport_image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
-	else if (_viewport_image_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-		viewport_to_color_barrier.srcStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
-		viewport_to_color_barrier.srcAccessMask = VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
-	}
-
-	viewport_to_color_barrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-	viewport_to_color_barrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
-	viewport_to_color_barrier.oldLayout = _viewport_image_layout;
-	viewport_to_color_barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	viewport_to_color_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	viewport_to_color_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	viewport_to_color_barrier.image = _viewport_image;
-	viewport_to_color_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	viewport_to_color_barrier.subresourceRange.baseMipLevel = 0;
-	viewport_to_color_barrier.subresourceRange.levelCount = 1;
-	viewport_to_color_barrier.subresourceRange.baseArrayLayer = 0;
-	viewport_to_color_barrier.subresourceRange.layerCount = 1;
-
-	VkDependencyInfo viewport_to_color_dependency{};
-	viewport_to_color_dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
-	viewport_to_color_dependency.imageMemoryBarrierCount = 1;
-	viewport_to_color_dependency.pImageMemoryBarriers = &viewport_to_color_barrier;
-
-	vkCmdPipelineBarrier2(command_buffer, &viewport_to_color_dependency);
-
-	_viewport_image_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkRenderingAttachmentInfo color_attachment_info{};
-	color_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-	color_attachment_info.imageView = _viewport_color_image_view;
-	color_attachment_info.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	color_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	color_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	color_attachment_info.clearValue.color = { 0.01f, 0.01f, 0.01f, 1 };
-	color_attachment_info.resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT;
-	color_attachment_info.resolveImageView = _viewport_image_view;
-	color_attachment_info.resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkRenderingAttachmentInfo depth_attachment_info{};
-	depth_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-	depth_attachment_info.imageView = _viewport_depth_image_view;
-	depth_attachment_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-	depth_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depth_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depth_attachment_info.clearValue.depthStencil = { 1.0f, 0 };
-
-	VkRenderingInfo rendering_info{};
-	rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-	rendering_info.renderArea.offset = { 0, 0 };
-	rendering_info.renderArea.extent = viewport_extent;
-	rendering_info.layerCount = 1;
-	rendering_info.colorAttachmentCount = 1;
-	rendering_info.pColorAttachments = &color_attachment_info;
-	rendering_info.pDepthAttachment = &depth_attachment_info;
-
-	vkCmdBeginRendering(command_buffer, &rendering_info);
-
-	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _graphics_pipeline);
-
-	VkViewport viewport{};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = static_cast<float>(viewport_extent.width);
-	viewport.height = static_cast<float>(viewport_extent.height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	vkCmdSetViewport(command_buffer, 0, 1, &viewport);
-
-	VkRect2D scissor{};
-	scissor.offset = { 0, 0 };
-	scissor.extent = viewport_extent;
-	vkCmdSetScissor(command_buffer, 0, 1, &scissor);
-
-	for (const RenderItem& render_item : render_bundle.render_items) {
-
-		auto& mesh = _meshes.at(render_item.mesh_id);
-		auto& material = _materials.at(render_item.material_id);
-
-		VkBuffer vertex_buffers[] = { mesh.vertex_buffer };
-		VkDeviceSize offsets[] = { 0 };
-
-		PushConstantData push_constants{};
-		push_constants.model_matrix = render_item.model_matrix;
-
-		vkCmdPushConstants(command_buffer, _pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantData), &push_constants);
-
-		vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffers, offsets);
-
-		vkCmdBindIndexBuffer(command_buffer, mesh.index_buffer, 0, VK_INDEX_TYPE_UINT32);
-
-		VkDescriptorSet descriptor_set = _descriptor_sets[render_item.material_id][_current_frame];
-
-		vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
-
-		vkCmdDrawIndexed(command_buffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
-		_draw_call_counter++;
-	}
-
-	//vkCmdEndRenderPass(commandBuffer);
-	vkCmdEndRendering(command_buffer);
-
-	VkImageMemoryBarrier2 viewport_to_shader_barrier{};
-	viewport_to_shader_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-	viewport_to_shader_barrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-	viewport_to_shader_barrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
-	viewport_to_shader_barrier.dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
-	viewport_to_shader_barrier.dstAccessMask = VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
-	viewport_to_shader_barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	viewport_to_shader_barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	viewport_to_shader_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	viewport_to_shader_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	viewport_to_shader_barrier.image = _viewport_image;
-	viewport_to_shader_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	viewport_to_shader_barrier.subresourceRange.baseMipLevel = 0;
-	viewport_to_shader_barrier.subresourceRange.levelCount = 1;
-	viewport_to_shader_barrier.subresourceRange.baseArrayLayer = 0;
-	viewport_to_shader_barrier.subresourceRange.layerCount = 1;
-
-	VkDependencyInfo viewport_to_shader_dependency{};
-	viewport_to_shader_dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
-	viewport_to_shader_dependency.imageMemoryBarrierCount = 1;
-	viewport_to_shader_dependency.pImageMemoryBarriers = &viewport_to_shader_barrier;
-
-	vkCmdPipelineBarrier2(command_buffer, &viewport_to_shader_dependency);
-
-	_viewport_image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	VkImageMemoryBarrier2 swapchain_to_color_barrier{};
 	swapchain_to_color_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;

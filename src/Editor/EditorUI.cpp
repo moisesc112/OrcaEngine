@@ -37,6 +37,7 @@ void EditorUI::Initialize(GLFWwindow* window,
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	const VkFormat swapchain_image_format = swapchain->GetFormat();
 
@@ -88,6 +89,7 @@ void EditorUI::BeginFrame()
 
 void EditorUI::Draw()
 {
+    DrawDockSpace();
     DrawScenePanel();
     DrawViewport();
     DrawInspectorPanel();
@@ -104,10 +106,15 @@ ImDrawData* EditorUI::GetDrawData()
     return ImGui::GetDrawData();
 }
 
+void EditorUI::DrawDockSpace()
+{
+    ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+}
+
 void EditorUI::DrawDebugPanel()
 {
-    ImGui::SetNextWindowPos(ImVec2(10.0f, 300.0f), ImGuiCond_Appearing);
-    ImGui::SetNextWindowSize(ImVec2(220.0f, 250.0f), ImGuiCond_Appearing);
+    //ImGui::SetNextWindowPos(ImVec2(10.0f, 300.0f), ImGuiCond_Appearing);
+    //ImGui::SetNextWindowSize(ImVec2(220.0f, 250.0f), ImGuiCond_Appearing);
 
     ImGui::Begin("Debug Options");
 
@@ -130,8 +137,8 @@ void EditorUI::DrawDebugPanel()
 
 void EditorUI::DrawScenePanel()
 {
-    ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f), ImGuiCond_Appearing);
-    ImGui::SetNextWindowSize(ImVec2(220.0f, 250.0f), ImGuiCond_Appearing);
+    //ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f), ImGuiCond_Appearing);
+    //ImGui::SetNextWindowSize(ImVec2(220.0f, 250.0f), ImGuiCond_Appearing);
     ImGui::Begin("Scene");
 
     for (Entity entity : _registry->GetAliveEntities()) {
@@ -155,8 +162,8 @@ void EditorUI::DrawScenePanel()
 
 void EditorUI::DrawInspectorPanel()
 {
-    ImGui::SetNextWindowPos(ImVec2(950.0f, 10.0f), ImGuiCond_Appearing);
-    ImGui::SetNextWindowSize(ImVec2(220.0f, 250.0f), ImGuiCond_Appearing);
+    //ImGui::SetNextWindowPos(ImVec2(950.0f, 10.0f), ImGuiCond_Appearing);
+    //ImGui::SetNextWindowSize(ImVec2(220.0f, 250.0f), ImGuiCond_Appearing);
     ImGui::Begin("Inspector");
 
     if (_selected_entity && _registry->IsAlive(*_selected_entity)) {
@@ -181,8 +188,8 @@ void EditorUI::DrawInspectorPanel()
 
 void EditorUI::DrawViewport()
 {   
-    ImGui::SetNextWindowPos(ImVec2(250.0f, 10.0f), ImGuiCond_Appearing);
-    ImGui::SetNextWindowSize(ImVec2(680.0f, 550.0f), ImGuiCond_Appearing);
+    //ImGui::SetNextWindowPos(ImVec2(250.0f, 10.0f), ImGuiCond_Appearing);
+    //ImGui::SetNextWindowSize(ImVec2(680.0f, 550.0f), ImGuiCond_Appearing);
 
     ImGui::Begin("Viewport");
 

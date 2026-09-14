@@ -121,6 +121,8 @@ void Application::UpdateViewport()
 	if (current_extent.width == 0 || current_extent.height == 0) {
 		_renderer.CreateViewportResources(new_extent);
 		_editor_ui.SetViewportTexture(_renderer.GetViewportSampler(), _renderer.GetViewportImageView());
+
+		return;
 	}
 
 	if (new_extent.width != current_extent.width || new_extent.height != current_extent.height) {
@@ -151,9 +153,9 @@ void Application::RenderFrame()
 {
 	VkExtent2D viewport_extent = _renderer.GetViewportExtent();
 
-	if (viewport_extent.width == 0 || viewport_extent.height == 0) {
-		return;
-	}
+	//if (viewport_extent.width == 0 || viewport_extent.height == 0) {
+	//	return;
+	//}
 
 	RenderBundle render_bundle = RenderExtraction::ExtractRenderBundle(_registry);
 

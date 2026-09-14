@@ -43,11 +43,19 @@ public:
 	void Shutdown();
 
 	void RecreateSwapchainResources();
-	void DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, RenderBundle& render_bundle);
+	void DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, RenderBundle& render_bundle, VkExtent2D& viewport_extent);
+
+	void CreateViewportResources(VkExtent2D& viewport_extent);
+	void RecreateViewportResources(VkExtent2D& viewport_extent);
+	void DestroyViewportResources();
 
 	//std::vector<Vertex> GetVertices() { return _vertices; }
 	//std::vector<uint32_t> GetIndices() { return _indices; }
 	uint32_t GetDrawCallCounter() { return _draw_call_counter; }
+
+	VkSampler GetViewportSampler() { return _viewport_sampler; }
+	VkImageView GetViewportImageView() { return _viewport_image_view; }
+	VkExtent2D GetViewportExtent() { return _viewport_extent; }
 
 private:
 
@@ -120,7 +128,12 @@ private:
 	void CreateDescriptorSet(MaterialId material_id);
 
 	void CreateCommandBuffers();
-	void RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data, RenderBundle& render_bundle);
+	void RecordCommandBuffer(VkCommandBuffer command_buffer, 
+							 uint32_t image_index, 
+							 ImDrawData* imgui_draw_data, 
+							 RenderBundle& render_bundle,
+							 VkExtent2D& viewport_extent);
+
 	void CreateSyncObjects();
 	void RecreateSwapchain();
 
@@ -171,4 +184,20 @@ private:
 	VkDeviceMemory _color_image_memory;
 	VkImageView _color_image_view;
 	uint32_t _draw_call_counter = 0;
+
+	VkImage _viewport_image = VK_NULL_HANDLE;
+	VkDeviceMemory _viewport_image_memory = VK_NULL_HANDLE;
+	VkImageView _viewport_image_view = VK_NULL_HANDLE;
+	VkSampler _viewport_sampler = VK_NULL_HANDLE;
+
+	VkExtent2D _viewport_extent = { 0, 0 };
+	VkImageLayout _viewport_image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+	VkImage _viewport_color_image = VK_NULL_HANDLE;
+	VkDeviceMemory _viewport_color_image_memory = VK_NULL_HANDLE;
+	VkImageView _viewport_color_image_view = VK_NULL_HANDLE;
+
+	VkImage _viewport_depth_image = VK_NULL_HANDLE;
+	VkDeviceMemory _viewport_depth_image_memory = VK_NULL_HANDLE;
+	VkImageView _viewport_depth_image_view = VK_NULL_HANDLE;
 };

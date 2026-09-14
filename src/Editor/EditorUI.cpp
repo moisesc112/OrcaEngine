@@ -66,6 +66,12 @@ void EditorUI::Initialize(GLFWwindow* window,
 	ImGui_ImplVulkan_Init(&init_info);
 }
 
+void EditorUI::DestroyViewportTexture()
+{
+    ImGui_ImplVulkan_RemoveTexture(_viewport_descriptor_set);
+    _viewport_descriptor_set = VK_NULL_HANDLE;
+}
+
 void EditorUI::Shutdown()
 {
     ImGui_ImplVulkan_Shutdown();
@@ -82,9 +88,10 @@ void EditorUI::BeginFrame()
 
 void EditorUI::Draw()
 {
-    DrawDebugPanel();
     DrawScenePanel();
+    DrawViewport();
     DrawInspectorPanel();
+    DrawDebugPanel();
 }
 
 void EditorUI::EndFrame()
@@ -172,10 +179,35 @@ void EditorUI::DrawInspectorPanel()
     ImGui::End();
 }
 
+void EditorUI::DrawViewport()
+{   
+    ImGui::SetNextWindowPos(ImVec2(250.0f, 10.0f), ImGuiCond_Appearing);
+    ImGui::SetNextWindowSize(ImVec2(680.0f, 550.0f), ImGuiCond_Appearing);
+
+    ImGui::Begin("Viewport");
+
+    ImVec2 viewport_size = ImGui::GetContentRegionAvail();
+
+    _viewport_extent.width = static_cast<std::uint32_t>(std::max(viewport_size.x, 0.0f));
+    _viewport_extent.height = static_cast<std::uint32_t>(std::max(viewport_size.y, 0.0f));
+
+    if (_viewport_descriptor_set != VK_NULL_HANDLE) {
+        ImGui::Image(_viewport_descriptor_set, viewport_size);
+    }
+
+    ImGui::End();
+}
+
 void EditorUI::SetSelectedEntity(Entity entity)
 {
     _selected_entity = entity;
 }
+
+void EditorUI::SetViewportTexture(VkSampler sampler, VkImageView image_view)
+{
+    _viewport_descriptor_set = ImGui_ImplVulkan_AddTexture(sampler, image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+}
+
 
 void EditorUI::check_vk_result(VkResult err) 
 {

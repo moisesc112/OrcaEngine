@@ -63,6 +63,25 @@ void Renderer::DestroySwapchainResources()
 	vkFreeMemory(device, _depth_image_memory, nullptr);
 }
 
+void Renderer::DestroyViewportResources()
+{
+	const VkDevice device = _vulkan_context->GetLogicalDevice();
+
+	vkDestroyImageView(device, _viewport_color_image_view, nullptr);
+	vkDestroyImage(device, _viewport_color_image, nullptr);
+	vkFreeMemory(device, _viewport_color_image_memory, nullptr);
+
+	vkDestroyImageView(device, _viewport_depth_image_view, nullptr);
+	vkDestroyImage(device, _viewport_depth_image, nullptr);
+	vkFreeMemory(device, _viewport_depth_image_memory, nullptr);
+
+	vkDestroySampler(device, _viewport_sampler, nullptr);
+	vkDestroyImageView(device, _viewport_image_view, nullptr);
+	
+	vkDestroyImage(device, _viewport_image, nullptr);
+	vkFreeMemory(device, _viewport_image_memory, nullptr);
+}
+
 void Renderer::Shutdown()
 {
 	const VkDevice device = _vulkan_context->GetLogicalDevice();
@@ -164,7 +183,7 @@ void Renderer::RecreateSwapchainResources()
 	CreateDepthResources();
 }
 
-void Renderer::DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, RenderBundle& render_bundle) 
+void Renderer::DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, RenderBundle& render_bundle, VkExtent2D& viewport_extent) 
 {
 	const VkDevice device = _vulkan_context->GetLogicalDevice();
 	const VkSwapchainKHR swapchain = _swapchain->GetSwapchain();
@@ -185,7 +204,7 @@ void Renderer::DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, 
 	vkResetFences(device, 1, &_in_flight_fences[_current_frame]);
 
 	vkResetCommandBuffer(_command_buffers[_current_frame], 0);
-	RecordCommandBuffer(_command_buffers[_current_frame], image_index, imgui_draw_data, render_bundle);
+	RecordCommandBuffer(_command_buffers[_current_frame], image_index, imgui_draw_data, render_bundle, viewport_extent);
 
 	UpdateUniformBuffer(_current_frame);
 
@@ -1079,7 +1098,7 @@ void Renderer::CreateCommandBuffers()
 	}
 }
 
-void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data, RenderBundle& render_bundle) 
+void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data, RenderBundle& render_bundle, VkExtent2D& viewport_extent) 
 {
 	_draw_call_counter = 0;
 
@@ -1092,44 +1111,54 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 		throw std::runtime_error("failed to begin recording command buffer!");
 	}
 
-	VkImageMemoryBarrier2 to_color_barrier{};
-	to_color_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-	to_color_barrier.srcStageMask = VK_PIPELINE_STAGE_2_NONE;
-	to_color_barrier.srcAccessMask = VK_ACCESS_2_NONE;
-	to_color_barrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-	to_color_barrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
-	to_color_barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	to_color_barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	to_color_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	to_color_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	to_color_barrier.image = _swapchain->GetImages()[image_index];
-	to_color_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	to_color_barrier.subresourceRange.baseMipLevel = 0;
-	to_color_barrier.subresourceRange.levelCount = 1;
-	to_color_barrier.subresourceRange.baseArrayLayer = 0;
-	to_color_barrier.subresourceRange.layerCount = 1;
+	VkImageMemoryBarrier2 viewport_to_color_barrier{};
+	viewport_to_color_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
 
-	VkDependencyInfo to_color_dependency{};
-	to_color_dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
-	to_color_dependency.imageMemoryBarrierCount = 1;
-	to_color_dependency.pImageMemoryBarriers = &to_color_barrier;
+	if (_viewport_image_layout == VK_IMAGE_LAYOUT_UNDEFINED) {
+		viewport_to_color_barrier.srcStageMask = VK_PIPELINE_STAGE_2_NONE;
+		viewport_to_color_barrier.srcAccessMask = VK_ACCESS_2_NONE;
+	}
+	else if (_viewport_image_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+		viewport_to_color_barrier.srcStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+		viewport_to_color_barrier.srcAccessMask = VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+	}
 
-	vkCmdPipelineBarrier2(command_buffer, &to_color_dependency);
+	viewport_to_color_barrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+	viewport_to_color_barrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+	viewport_to_color_barrier.oldLayout = _viewport_image_layout;
+	viewport_to_color_barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	viewport_to_color_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	viewport_to_color_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	viewport_to_color_barrier.image = _viewport_image;
+	viewport_to_color_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewport_to_color_barrier.subresourceRange.baseMipLevel = 0;
+	viewport_to_color_barrier.subresourceRange.levelCount = 1;
+	viewport_to_color_barrier.subresourceRange.baseArrayLayer = 0;
+	viewport_to_color_barrier.subresourceRange.layerCount = 1;
+
+	VkDependencyInfo viewport_to_color_dependency{};
+	viewport_to_color_dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+	viewport_to_color_dependency.imageMemoryBarrierCount = 1;
+	viewport_to_color_dependency.pImageMemoryBarriers = &viewport_to_color_barrier;
+
+	vkCmdPipelineBarrier2(command_buffer, &viewport_to_color_dependency);
+
+	_viewport_image_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VkRenderingAttachmentInfo color_attachment_info{};
 	color_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-	color_attachment_info.imageView = _color_image_view;
+	color_attachment_info.imageView = _viewport_color_image_view;
 	color_attachment_info.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	color_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	color_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	color_attachment_info.clearValue.color = { 0.01f, 0.01f, 0.01f, 1 };
 	color_attachment_info.resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT;
-	color_attachment_info.resolveImageView = _swapchain->GetImageViews()[image_index];
+	color_attachment_info.resolveImageView = _viewport_image_view;
 	color_attachment_info.resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VkRenderingAttachmentInfo depth_attachment_info{};
 	depth_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-	depth_attachment_info.imageView = _depth_image_view;
+	depth_attachment_info.imageView = _viewport_depth_image_view;
 	depth_attachment_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
 	depth_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depth_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -1138,7 +1167,7 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 	VkRenderingInfo rendering_info{};
 	rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
 	rendering_info.renderArea.offset = { 0, 0 };
-	rendering_info.renderArea.extent = _swapchain->GetExtent();
+	rendering_info.renderArea.extent = viewport_extent;
 	rendering_info.layerCount = 1;
 	rendering_info.colorAttachmentCount = 1;
 	rendering_info.pColorAttachments = &color_attachment_info;
@@ -1151,15 +1180,15 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = static_cast<float>(_swapchain->GetExtent().width);
-	viewport.height = static_cast<float>(_swapchain->GetExtent().height);
+	viewport.width = static_cast<float>(viewport_extent.width);
+	viewport.height = static_cast<float>(viewport_extent.height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 
 	VkRect2D scissor{};
 	scissor.offset = { 0, 0 };
-	scissor.extent = _swapchain->GetExtent();
+	scissor.extent = viewport_extent;
 	vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
 	for (const RenderItem& render_item : render_bundle.render_items) {
@@ -1190,35 +1219,61 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer command_buffer, uint32_t imag
 	//vkCmdEndRenderPass(commandBuffer);
 	vkCmdEndRendering(command_buffer);
 
-	VkImageMemoryBarrier2 to_imgui_barrier{};
-	to_imgui_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-	to_imgui_barrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-	to_imgui_barrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
-	to_imgui_barrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-	to_imgui_barrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
-	to_imgui_barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	to_imgui_barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	to_imgui_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	to_imgui_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	to_imgui_barrier.image = _swapchain->GetImages()[image_index];
-	to_imgui_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	to_imgui_barrier.subresourceRange.baseMipLevel = 0;
-	to_imgui_barrier.subresourceRange.levelCount = 1;
-	to_imgui_barrier.subresourceRange.baseArrayLayer = 0;
-	to_imgui_barrier.subresourceRange.layerCount = 1;
+	VkImageMemoryBarrier2 viewport_to_shader_barrier{};
+	viewport_to_shader_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+	viewport_to_shader_barrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+	viewport_to_shader_barrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+	viewport_to_shader_barrier.dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+	viewport_to_shader_barrier.dstAccessMask = VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+	viewport_to_shader_barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	viewport_to_shader_barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	viewport_to_shader_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	viewport_to_shader_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	viewport_to_shader_barrier.image = _viewport_image;
+	viewport_to_shader_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewport_to_shader_barrier.subresourceRange.baseMipLevel = 0;
+	viewport_to_shader_barrier.subresourceRange.levelCount = 1;
+	viewport_to_shader_barrier.subresourceRange.baseArrayLayer = 0;
+	viewport_to_shader_barrier.subresourceRange.layerCount = 1;
 
-	VkDependencyInfo to_imgui_dependency{};
-	to_imgui_dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
-	to_imgui_dependency.imageMemoryBarrierCount = 1;
-	to_imgui_dependency.pImageMemoryBarriers = &to_imgui_barrier;
+	VkDependencyInfo viewport_to_shader_dependency{};
+	viewport_to_shader_dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+	viewport_to_shader_dependency.imageMemoryBarrierCount = 1;
+	viewport_to_shader_dependency.pImageMemoryBarriers = &viewport_to_shader_barrier;
 
-	vkCmdPipelineBarrier2(command_buffer, &to_imgui_dependency);
+	vkCmdPipelineBarrier2(command_buffer, &viewport_to_shader_dependency);
+
+	_viewport_image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	VkImageMemoryBarrier2 swapchain_to_color_barrier{};
+	swapchain_to_color_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+	swapchain_to_color_barrier.srcStageMask = VK_PIPELINE_STAGE_2_NONE;
+	swapchain_to_color_barrier.srcAccessMask = VK_ACCESS_2_NONE;
+	swapchain_to_color_barrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+	swapchain_to_color_barrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+	swapchain_to_color_barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	swapchain_to_color_barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	swapchain_to_color_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	swapchain_to_color_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	swapchain_to_color_barrier.image = _swapchain->GetImages()[image_index];
+	swapchain_to_color_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	swapchain_to_color_barrier.subresourceRange.baseMipLevel = 0;
+	swapchain_to_color_barrier.subresourceRange.levelCount = 1;
+	swapchain_to_color_barrier.subresourceRange.baseArrayLayer = 0;
+	swapchain_to_color_barrier.subresourceRange.layerCount = 1;
+
+	VkDependencyInfo swapchain_to_color_dependency{};
+	swapchain_to_color_dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+	swapchain_to_color_dependency.imageMemoryBarrierCount = 1;
+	swapchain_to_color_dependency.pImageMemoryBarriers = &swapchain_to_color_barrier;
+
+	vkCmdPipelineBarrier2(command_buffer, &swapchain_to_color_dependency);
 
 	VkRenderingAttachmentInfo imgui_color_attachment_info{};
 	imgui_color_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 	imgui_color_attachment_info.imageView = _swapchain->GetImageViews()[image_index];
 	imgui_color_attachment_info.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	imgui_color_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+	imgui_color_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	imgui_color_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
 	VkRenderingInfo imgui_rendering_info{};
@@ -1415,6 +1470,71 @@ void Renderer::GenerateMipmaps(VkImage image,
 	vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
 	EndSingleTimeCommands(command_buffer);
+}
+
+void Renderer::CreateViewportResources(VkExtent2D& viewport_extent)
+{
+	const VkFormat color_format = _swapchain->GetFormat();
+	const VkFormat depth_format = FindDepthFormat();
+	const VkExtent2D swapchain_extent = _swapchain->GetExtent();
+
+	_viewport_extent = viewport_extent;
+	_viewport_image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+	CreateImage(viewport_extent.width, viewport_extent.height, 1, _vulkan_context->GetMsaaSamples(), color_format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _viewport_color_image, _viewport_color_image_memory);
+	_viewport_color_image_view = VulkanUtils::CreateImageView(_vulkan_context->GetLogicalDevice(), _viewport_color_image, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+
+	TransitionImageLayout(_viewport_color_image, color_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 1);
+
+	CreateImage(viewport_extent.width, viewport_extent.height, 1, _vulkan_context->GetMsaaSamples(), depth_format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _viewport_depth_image, _viewport_depth_image_memory);
+	_viewport_depth_image_view = VulkanUtils::CreateImageView(_vulkan_context->GetLogicalDevice(), _viewport_depth_image, depth_format, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+
+	TransitionImageLayout(_viewport_depth_image, depth_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, 1);
+
+	CreateImage(viewport_extent.width, 
+				viewport_extent.height, 
+				1, 
+				VK_SAMPLE_COUNT_1_BIT, 
+				color_format, 
+				VK_IMAGE_TILING_OPTIMAL, 
+				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | 
+				VK_IMAGE_USAGE_SAMPLED_BIT, 
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+				_viewport_image, 
+				_viewport_image_memory);
+
+	_viewport_image_view = VulkanUtils::CreateImageView(_vulkan_context->GetLogicalDevice(), _viewport_image, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+
+	VkPhysicalDeviceProperties properties{};
+	vkGetPhysicalDeviceProperties(_vulkan_context->GetPhysicalDevice(), &properties);
+
+	VkSamplerCreateInfo sampler_info{};
+	sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	sampler_info.magFilter = VK_FILTER_LINEAR;
+	sampler_info.minFilter = VK_FILTER_LINEAR;
+	sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	sampler_info.anisotropyEnable = VK_FALSE;
+	sampler_info.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+	sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	sampler_info.unnormalizedCoordinates = VK_FALSE;
+	sampler_info.compareEnable = VK_FALSE;
+	sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+	sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_info.mipLodBias = 0.0f;
+	sampler_info.minLod = 0.0f;
+	sampler_info.maxLod = 0.0f;
+
+	if (vkCreateSampler(_vulkan_context->GetLogicalDevice(), &sampler_info, nullptr, &_viewport_sampler) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create viewport sampler!");
+	}
+}
+
+void Renderer::RecreateViewportResources(VkExtent2D& viewport_extent)
+{
+	DestroyViewportResources();
+	CreateViewportResources(viewport_extent);
 }
 
 std::vector<char> Renderer::ReadFile(const std::string& filename) 

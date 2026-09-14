@@ -27,6 +27,7 @@ public:
                     Registry* registry);
 
     void Shutdown();
+    void DestroyViewportTexture();
 
     void BeginFrame();
     void Draw();
@@ -35,11 +36,15 @@ public:
     ImDrawData* GetDrawData();
 
     void SetSelectedEntity(Entity entity);
+    void SetViewportTexture(VkSampler sampler, VkImageView image_view);
+
+    VkExtent2D& GetViewportExtent() { return _viewport_extent; }
 
 private:
     void DrawDebugPanel();
     void DrawScenePanel();
     void DrawInspectorPanel();
+    void DrawViewport();
 
     static void check_vk_result(VkResult err);
 
@@ -47,6 +52,9 @@ private:
     Swapchain* _swapchain = nullptr;
     Renderer* _renderer = nullptr;
     Registry* _registry = nullptr;
+
+    VkDescriptorSet _viewport_descriptor_set = VK_NULL_HANDLE;
+    VkExtent2D _viewport_extent = { 0, 0 };
 
     std::optional<Entity> _selected_entity;
 };

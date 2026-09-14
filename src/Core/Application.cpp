@@ -35,6 +35,8 @@ void Application::Run()
 
 		UpdateScene();
 		RenderFrame();
+
+		UpdateViewport();
 	}
 }
 
@@ -42,6 +44,8 @@ void Application::Shutdown()
 {
 	vkDeviceWaitIdle(_vulkan_context.GetLogicalDevice());
 
+	_editor_ui.DestroyViewportTexture();
+	_renderer.DestroyViewportResources();
 	_editor_ui.Shutdown();
 	_renderer.DestroySwapchainResources();
 	_swapchain.Shutdown();
@@ -105,6 +109,31 @@ void Application::InitEditorUI()
 	//_editor_ui.SetSelectedEntity(_entity);
 }
 
+void Application::UpdateViewport()
+{
+	VkExtent2D new_extent = _editor_ui.GetViewportExtent();
+	VkExtent2D current_extent = _renderer.GetViewportExtent();
+
+	if (new_extent.width == 0 || new_extent.height == 0) {
+		return;
+	}
+
+	if (current_extent.width == 0 || current_extent.height == 0) {
+		_renderer.CreateViewportResources(new_extent);
+		_editor_ui.SetViewportTexture(_renderer.GetViewportSampler(), _renderer.GetViewportImageView());
+	}
+
+	if (new_extent.width != current_extent.width || new_extent.height != current_extent.height) {
+		vkDeviceWaitIdle(_vulkan_context.GetLogicalDevice());
+		
+		_editor_ui.DestroyViewportTexture();
+
+		_renderer.RecreateViewportResources(new_extent);
+
+		_editor_ui.SetViewportTexture(_renderer.GetViewportSampler(), _renderer.GetViewportImageView());
+	}
+}
+
 void Application::UpdateScene()
 {
 	{
@@ -120,9 +149,15 @@ void Application::UpdateScene()
 
 void Application::RenderFrame()
 {
+	VkExtent2D viewport_extent = _renderer.GetViewportExtent();
+
+	if (viewport_extent.width == 0 || viewport_extent.height == 0) {
+		return;
+	}
+
 	RenderBundle render_bundle = RenderExtraction::ExtractRenderBundle(_registry);
 
-	_renderer.DrawFrame(_framebuffer_resized, _editor_ui.GetDrawData(), render_bundle);
+	_renderer.DrawFrame(_framebuffer_resized, _editor_ui.GetDrawData(), render_bundle, viewport_extent);
 	_framebuffer_resized = false;
 }
 

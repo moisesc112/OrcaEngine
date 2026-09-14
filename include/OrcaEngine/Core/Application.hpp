@@ -49,6 +49,7 @@ private:
 	void InitEditorUI();
 	void InitRegistry();
 
+	void UpdateViewport();
 	void UpdateScene();
 	void RenderFrame();
 

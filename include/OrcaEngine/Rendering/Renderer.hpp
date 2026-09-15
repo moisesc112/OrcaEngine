@@ -3,6 +3,7 @@
 #include <OrcaEngine/Rendering/VulkanTypes.hpp>
 #include <OrcaEngine/Rendering/RenderTypes.hpp>
 #include <OrcaEngine/Rendering/Vertex.hpp>
+#include <OrcaEngine/Camera/Camera.hpp>
 
 #include <vulkan/vulkan_raii.hpp>
 
@@ -151,6 +152,8 @@ private:
 	GLFWwindow* _window = nullptr;
 	VulkanContext* _vulkan_context = nullptr;
 	Swapchain* _swapchain = nullptr;
+	
+	Camera _camera;
 
 	std::unordered_map<MeshId, MeshResource> _meshes;
 	std::unordered_map<TextureId, TextureResource> _textures;

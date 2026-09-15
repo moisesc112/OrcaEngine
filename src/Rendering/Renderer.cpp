@@ -1384,10 +1384,11 @@ void Renderer::UpdateUniformBuffer(uint32_t current_image)
 	auto current_time = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
 
+	float aspect_ratio = _viewport_extent.width / (float)_viewport_extent.height;
+	
 	UniformBufferObject ubo{};
-	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.proj = glm::perspective(glm::radians(45.0f), _viewport_extent.width / (float)_viewport_extent.height, 0.1f, 10.0f);
-	ubo.proj[1][1] *= -1;
+	ubo.view = _camera.GetViewMatrix();
+	ubo.proj = _camera.GetProjectionMatrix(aspect_ratio);
 
 	memcpy(_uniform_buffers_mapped[current_image], &ubo, sizeof(ubo));
 }

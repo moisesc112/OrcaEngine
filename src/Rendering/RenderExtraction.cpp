@@ -2,6 +2,7 @@
 #include <OrcaEngine/ECS/Components/MaterialComponent.hpp>
 #include <OrcaEngine/ECS/Components/MeshComponent.hpp>
 #include <OrcaEngine/ECS/Components/TransformComponent.hpp>
+#include <OrcaEngine/ECS/Components/LightComponent.hpp>
 
 #include <glm/glm.hpp>
 
@@ -12,6 +13,7 @@ namespace RenderExtraction{
     RenderBundle ExtractRenderBundle(Registry& registry)
     {
         std::vector<RenderItem> render_items;
+        DirectionalLight directional_light;
 
         for (Entity entity : registry.View<MeshComponent, TransformComponent, MaterialComponent>()) {
             auto& mesh = registry.GetComponent<MeshComponent>(entity);
@@ -31,7 +33,16 @@ namespace RenderExtraction{
             render_items.push_back({mesh.mesh_id, material.material_id, model_matrix});
         }
 
-        RenderBundle render_bundle{render_items};
+        for (Entity entity : registry.View<LightComponent, TransformComponent>()) {
+            auto& light = registry.GetComponent<LightComponent>(entity);
+            auto& transform = registry.GetComponent<TransformComponent>(entity);
+
+            directional_light.direction = transform.GetForwardDirection();
+            directional_light.color = light.color;
+            directional_light.intensity = light.intensity;
+        }
+
+        RenderBundle render_bundle{render_items, directional_light};
         
         return render_bundle;
     }

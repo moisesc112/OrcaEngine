@@ -17,6 +17,12 @@ using MeshId = std::uint32_t;
 using MaterialId = std::uint32_t;
 using TextureId = std::uint32_t;
 
+struct DirectionalLight {
+    glm::vec3 direction;
+    glm::vec3 color;
+    float intensity;
+};
+
 struct RenderItem {
     MeshId mesh_id;
     MaterialId material_id;
@@ -25,6 +31,7 @@ struct RenderItem {
 
 struct RenderBundle {
     std::vector<RenderItem> render_items;
+    DirectionalLight directional_light;
 };
 
 struct PushConstantData {

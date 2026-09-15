@@ -4,6 +4,7 @@
 #include <OrcaEngine/ECS/Components/TransformComponent.hpp>
 #include <OrcaEngine/ECS/Components/MeshComponent.hpp>
 #include <OrcaEngine/ECS/Components/NameComponent.hpp>
+#include <OrcaEngine/ECS/Components/LightComponent.hpp>
 
 #include <glm/glm.hpp>
 
@@ -109,6 +110,20 @@ void Application::InitRegistry()
 
 	_registry.AddComponent<MeshComponent>(entity, MeshComponent{ .mesh_id = 1 });
 	_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 1 });
+	}
+
+	{
+		Entity entity = _registry.CreateEntity();
+
+		_registry.AddComponent<NameComponent>(entity, NameComponent{ .name = "Directional Light"});
+		_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(0.0f),
+																			   .rotation = glm::vec3(-45.0f, 30.0f, 0.0f),
+																			   .scale = glm::vec3(1.0f) });
+
+		_registry.AddComponent<LightComponent>(entity, LightComponent{ .color = glm::vec3(1.0f),
+																	   .intensity = 1.0f });
+
+
 	}
 }
 

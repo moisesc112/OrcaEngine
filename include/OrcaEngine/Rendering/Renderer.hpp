@@ -32,6 +32,10 @@ const std::string TEXTURE_PATH = "C:/Users/moise/Documents/VS_projects/OrcaEngin
 struct UniformBufferObject {
 	alignas(16) glm::mat4 view;
 	alignas(16) glm::mat4 proj;
+
+	alignas(16) glm::vec3 light_direction;
+	alignas(16) glm::vec3 light_color;
+	alignas(4) float light_intensity;
 };
 
 class Renderer {
@@ -142,7 +146,7 @@ private:
 	void CreateSyncObjects();
 	void RecreateSwapchain();
 
-	void UpdateUniformBuffer(uint32_t current_image, Camera& camera);
+	void UpdateUniformBuffer(uint32_t current_image, Camera& camera, RenderBundle& render_bundle);
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
 	void GenerateMipmaps(VkImage image, 

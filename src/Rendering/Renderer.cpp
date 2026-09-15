@@ -214,9 +214,8 @@ void Renderer::DrawFrame(bool framebuffer_resized,
 		viewport_extent.height > 0 &&
 		_viewport_image != VK_NULL_HANDLE)
 	{
-		UpdateUniformBuffer(_current_frame, camera);
+		UpdateUniformBuffer(_current_frame, camera, render_bundle);
 	}
-
 	VkSubmitInfo submit_info{};
 	submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -1387,7 +1386,7 @@ void Renderer::RecreateSwapchain()
 	RecreateSwapchainResources();
 }
 
-void Renderer::UpdateUniformBuffer(uint32_t current_image, Camera& camera) 
+void Renderer::UpdateUniformBuffer(uint32_t current_image, Camera& camera, RenderBundle& render_bundle) 
 {
 	static auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -1399,6 +1398,10 @@ void Renderer::UpdateUniformBuffer(uint32_t current_image, Camera& camera)
 	UniformBufferObject ubo{};
 	ubo.view = camera.GetViewMatrix();
 	ubo.proj = camera.GetProjectionMatrix(aspect_ratio);
+
+	ubo.light_direction = render_bundle.directional_light.direction;
+	ubo.light_color = render_bundle.directional_light.color;
+	ubo.light_intensity = render_bundle.directional_light.intensity;
 	
 	memcpy(_uniform_buffers_mapped[current_image], &ubo, sizeof(ubo));
 }

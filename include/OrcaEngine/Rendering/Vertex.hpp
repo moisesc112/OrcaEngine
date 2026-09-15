@@ -12,6 +12,7 @@ struct Vertex {
 	glm::vec3 position;
 	glm::vec3 color;
 	glm::vec2 tex_coord;
+	glm::vec3 normal;
 
 	static VkVertexInputBindingDescription GetBindingDescription() {
 		VkVertexInputBindingDescription binding_description{};
@@ -22,8 +23,8 @@ struct Vertex {
 		return binding_description;
 	}
 
-	static std::array<VkVertexInputAttributeDescription, 3> GetAttributeDescriptions() {
-		std::array<VkVertexInputAttributeDescription, 3> attribute_descriptions{};
+	static std::array<VkVertexInputAttributeDescription, 4> GetAttributeDescriptions() {
+		std::array<VkVertexInputAttributeDescription, 4> attribute_descriptions{};
 		attribute_descriptions[0].binding = 0;
 		attribute_descriptions[0].location = 0;
 		attribute_descriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -39,20 +40,29 @@ struct Vertex {
 		attribute_descriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
 		attribute_descriptions[2].offset = offsetof(Vertex, tex_coord);
 
+		attribute_descriptions[3].binding = 0;
+		attribute_descriptions[3].location = 3;
+		attribute_descriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attribute_descriptions[3].offset = offsetof(Vertex, normal);
+
 		return attribute_descriptions;
 	}
 
 	bool operator==(const Vertex& other) const {
-		return position == other.position && color == other.color && tex_coord == other.tex_coord;
+		return position == other.position && 
+			   color == other.color && 
+			   tex_coord == other.tex_coord && 
+			   normal == other.normal;
 	}
 };
 
 namespace std {
 	template<> struct hash<Vertex> {
 		size_t operator()(Vertex const& vertex) const {
-			return ((hash<glm::vec3>()(vertex.position) ^
+			return ((((hash<glm::vec3>()(vertex.position) ^
 				(hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
-				(hash<glm::vec2>()(vertex.tex_coord) << 1);
+				(hash<glm::vec2>()(vertex.tex_coord) << 1)) >> 1) ^
+				(hash<glm::vec3>()(vertex.normal) << 1);
 		}
 	};
 }

@@ -183,7 +183,11 @@ void Renderer::RecreateSwapchainResources()
 	CreateDepthResources();
 }
 
-void Renderer::DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, RenderBundle& render_bundle, VkExtent2D& viewport_extent) 
+void Renderer::DrawFrame(bool framebuffer_resized, 
+						 ImDrawData* imgui_draw_data, 
+						 RenderBundle& render_bundle, 
+						 VkExtent2D& viewport_extent,
+						 Camera& camera) 
 {
 	const VkDevice device = _vulkan_context->GetLogicalDevice();
 	const VkSwapchainKHR swapchain = _swapchain->GetSwapchain();
@@ -210,7 +214,7 @@ void Renderer::DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, 
 		viewport_extent.height > 0 &&
 		_viewport_image != VK_NULL_HANDLE)
 	{
-		UpdateUniformBuffer(_current_frame);
+		UpdateUniformBuffer(_current_frame, camera);
 	}
 
 	VkSubmitInfo submit_info{};
@@ -1377,7 +1381,7 @@ void Renderer::RecreateSwapchain()
 	RecreateSwapchainResources();
 }
 
-void Renderer::UpdateUniformBuffer(uint32_t current_image) 
+void Renderer::UpdateUniformBuffer(uint32_t current_image, Camera& camera) 
 {
 	static auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -1385,11 +1389,11 @@ void Renderer::UpdateUniformBuffer(uint32_t current_image)
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
 
 	float aspect_ratio = _viewport_extent.width / (float)_viewport_extent.height;
-	
-	UniformBufferObject ubo{};
-	ubo.view = _camera.GetViewMatrix();
-	ubo.proj = _camera.GetProjectionMatrix(aspect_ratio);
 
+	UniformBufferObject ubo{};
+	ubo.view = camera.GetViewMatrix();
+	ubo.proj = camera.GetProjectionMatrix(aspect_ratio);
+	
 	memcpy(_uniform_buffers_mapped[current_image], &ubo, sizeof(ubo));
 }
 

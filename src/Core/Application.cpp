@@ -7,6 +7,8 @@
 
 #include <glm/glm.hpp>
 
+#include <chrono>
+
 Application::Application() {}
 
 Application::~Application()
@@ -26,13 +28,20 @@ void Application::Initialize()
 
 void Application::Run() 
 {
+	auto last_time = std::chrono::high_resolution_clock::now();
+
 	while (!_window.ShouldClose()) {
+		auto current_time = std::chrono::high_resolution_clock::now();
+		float delta_time = std::chrono::duration<float>(current_time - last_time).count();
+		last_time = current_time;
+
 		glfwPollEvents();
 
 		_editor_ui.BeginFrame();
 		_editor_ui.Draw();
 		_editor_ui.EndFrame();
 
+		UpdateCamera(delta_time);
 		UpdateScene();
 		RenderFrame();
 
@@ -109,6 +118,68 @@ void Application::InitEditorUI()
 	//_editor_ui.SetSelectedEntity(_entity);
 }
 
+void Application::UpdateCamera(float delta_time)
+{
+	GLFWwindow* window = _window.GetHandle();
+
+	bool is_right_mouse_pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+
+	if (!_is_camera_look_active && _editor_ui.IsViewportHovered() && is_right_mouse_pressed) {
+		_is_camera_look_active = true;
+
+		glfwGetCursorPos(window, &_last_mouse_x, &_last_mouse_y);
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	}
+
+	if (_is_camera_look_active && !is_right_mouse_pressed) {
+		_is_camera_look_active = false;
+
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
+
+	if (_is_camera_look_active) {
+		float distance = _camera_move_speed * delta_time;
+
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+			_camera.MoveForward(distance);
+		}
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+			_camera.MoveForward(-distance);
+		}
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+			_camera.MoveRight(-distance);
+		}
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+			_camera.MoveRight(distance);
+		}
+		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+			_camera.MoveUp(distance);
+		}
+		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+			_camera.MoveUp(-distance);
+		}
+
+		UpdateCameraRotation();
+	}
+}
+
+void Application::UpdateCameraRotation()
+{
+	double mouse_x;
+	double mouse_y;
+
+	glfwGetCursorPos(_window.GetHandle(), &mouse_x, &mouse_y);
+
+	float delta_x = static_cast<float>(mouse_x - _last_mouse_x);
+	float delta_y = static_cast<float>(mouse_y - _last_mouse_y);
+
+	_last_mouse_x = mouse_x;
+	_last_mouse_y = mouse_y;
+
+	_camera.AddYaw(-delta_x * _camera_mouse_sensitivity);
+	_camera.AddPitch(-delta_y * _camera_mouse_sensitivity);
+}
+
 void Application::UpdateViewport()
 {
 	VkExtent2D new_extent = _editor_ui.GetViewportExtent();
@@ -159,7 +230,12 @@ void Application::RenderFrame()
 
 	RenderBundle render_bundle = RenderExtraction::ExtractRenderBundle(_registry);
 
-	_renderer.DrawFrame(_framebuffer_resized, _editor_ui.GetDrawData(), render_bundle, viewport_extent);
+	_renderer.DrawFrame(_framebuffer_resized, 
+						_editor_ui.GetDrawData(), 
+						render_bundle, 
+						viewport_extent,
+						_camera);
+
 	_framebuffer_resized = false;
 }
 

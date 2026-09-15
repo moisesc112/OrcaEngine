@@ -193,6 +193,9 @@ void EditorUI::DrawViewport()
 
     ImGui::Begin("Viewport");
 
+    _is_viewport_hovered = ImGui::IsWindowHovered();
+    _is_viewport_focused = ImGui::IsWindowFocused();
+
     ImVec2 viewport_size = ImGui::GetContentRegionAvail();
 
     _viewport_extent.width = static_cast<std::uint32_t>(std::max(viewport_size.x, 0.0f));

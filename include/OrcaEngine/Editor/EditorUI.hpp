@@ -40,6 +40,9 @@ public:
 
     VkExtent2D& GetViewportExtent() { return _viewport_extent; }
 
+    bool IsViewportHovered() { return _is_viewport_hovered; }
+    bool IsViewportFocused() { return _is_viewport_focused; }
+
 private:
     void DrawDockSpace();
     void DrawDebugPanel();
@@ -53,6 +56,9 @@ private:
     Swapchain* _swapchain = nullptr;
     Renderer* _renderer = nullptr;
     Registry* _registry = nullptr;
+
+    bool _is_viewport_hovered = false;
+    bool _is_viewport_focused = false;
 
     VkDescriptorSet _viewport_descriptor_set = VK_NULL_HANDLE;
     VkExtent2D _viewport_extent = { 0, 0 };

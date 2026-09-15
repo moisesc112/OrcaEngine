@@ -44,7 +44,11 @@ public:
 	void Shutdown();
 
 	void RecreateSwapchainResources();
-	void DrawFrame(bool framebuffer_resized, ImDrawData* imgui_draw_data, RenderBundle& render_bundle, VkExtent2D& viewport_extent);
+	void DrawFrame(bool framebuffer_resized, 
+				   ImDrawData* imgui_draw_data, 
+				   RenderBundle& render_bundle, 
+				   VkExtent2D& viewport_extent,
+				   Camera& camera);
 
 	void CreateViewportResources(VkExtent2D& viewport_extent);
 	void RecreateViewportResources(VkExtent2D& viewport_extent);
@@ -138,7 +142,7 @@ private:
 	void CreateSyncObjects();
 	void RecreateSwapchain();
 
-	void UpdateUniformBuffer(uint32_t current_image);
+	void UpdateUniformBuffer(uint32_t current_image, Camera& camera);
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
 	void GenerateMipmaps(VkImage image, 
@@ -153,8 +157,6 @@ private:
 	VulkanContext* _vulkan_context = nullptr;
 	Swapchain* _swapchain = nullptr;
 	
-	Camera _camera;
-
 	std::unordered_map<MeshId, MeshResource> _meshes;
 	std::unordered_map<TextureId, TextureResource> _textures;
 	std::unordered_map<MaterialId, MaterialResource> _materials;

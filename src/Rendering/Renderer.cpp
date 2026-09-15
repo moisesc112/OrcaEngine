@@ -265,7 +265,7 @@ void Renderer::CreateDescriptorSetLayout()
 	ubo_layout_binding.binding = 0;
 	ubo_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	ubo_layout_binding.descriptorCount = 1;
-	ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	ubo_layout_binding.pImmutableSamplers = nullptr;
 
 	VkDescriptorSetLayoutBinding sampler_layout_binding{};
@@ -1402,6 +1402,8 @@ void Renderer::UpdateUniformBuffer(uint32_t current_image, Camera& camera, Rende
 	ubo.light_direction = render_bundle.directional_light.direction;
 	ubo.light_color = render_bundle.directional_light.color;
 	ubo.light_intensity = render_bundle.directional_light.intensity;
+
+	ubo.camera_position = camera.GetPosition();
 	
 	memcpy(_uniform_buffers_mapped[current_image], &ubo, sizeof(ubo));
 }

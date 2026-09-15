@@ -14,6 +14,7 @@ public:
 
     glm::mat4 GetViewMatrix();
     glm::mat4 GetProjectionMatrix(float aspect_ratio);
+    glm::vec3 GetPosition() { return _position; }
 
     void SetPosition(glm::vec3& position);
     void SetRotation(float yaw, float pitch);

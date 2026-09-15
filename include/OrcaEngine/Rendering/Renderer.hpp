@@ -36,6 +36,8 @@ struct UniformBufferObject {
 	alignas(16) glm::vec3 light_direction;
 	alignas(16) glm::vec3 light_color;
 	alignas(4) float light_intensity;
+
+	alignas(16) glm::vec3 camera_position;
 };
 
 class Renderer {

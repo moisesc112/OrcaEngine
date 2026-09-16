@@ -32,6 +32,8 @@ void Renderer::Initialize(GLFWwindow* window, VulkanContext* vulkan_context, Swa
 	RegisterTextures();
 	RegisterMaterials();
 
+	CreateShadowResources();
+
 	CreateDescriptorSetLayout();
 	CreateGraphicsPipeline();
 	CreateCommandPool();
@@ -82,9 +84,24 @@ void Renderer::DestroyViewportResources()
 	vkFreeMemory(device, _viewport_image_memory, nullptr);
 }
 
+void Renderer::DestroyShadowResources()
+{
+	const VkDevice device = _vulkan_context->GetLogicalDevice();
+
+	vkDestroySampler(device, _shadow_sampler, nullptr);
+	vkDestroyImageView(device, _shadow_image_view, nullptr);
+	vkDestroyImage(device, _shadow_image, nullptr);
+	vkFreeMemory(device, _shadow_image_memory, nullptr);
+	_shadow_image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+}
+
 void Renderer::Shutdown()
 {
 	const VkDevice device = _vulkan_context->GetLogicalDevice();
+
+	vkDestroyDescriptorPool(device, _descriptor_pool, nullptr);
+
+	DestroyShadowResources();
 
 	for (auto& [texture_id, texture] : _textures) {
 		vkDestroySampler(device, texture.texture_sampler, nullptr);
@@ -98,8 +115,6 @@ void Renderer::Shutdown()
 		vkDestroyBuffer(device, _uniform_buffers[i], nullptr);
 		vkFreeMemory(device, _uniform_buffers_memory[i], nullptr);
 	}
-
-	vkDestroyDescriptorPool(device, _descriptor_pool, nullptr);
 
 	vkDestroyDescriptorSetLayout(device, _descriptor_set_layout, nullptr);
 
@@ -465,6 +480,54 @@ void Renderer::CreateCommandPool()
 	if (vkCreateCommandPool(_vulkan_context->GetLogicalDevice(), &pool_info, nullptr, &_command_pool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create command pool!");
 	}
+}
+
+void Renderer::CreateShadowResources()
+{
+	VkDevice device = _vulkan_context->GetLogicalDevice();
+	VkFormat shadow_format = VK_FORMAT_D32_SFLOAT;
+
+	CreateImage(_shadow_map_width, 
+				_shadow_map_height, 
+				1, 
+				VK_SAMPLE_COUNT_1_BIT, 
+				shadow_format,
+				VK_IMAGE_TILING_OPTIMAL, 
+				VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
+				VK_IMAGE_USAGE_SAMPLED_BIT,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				_shadow_image,
+				_shadow_image_memory);
+
+	_shadow_image_view = VulkanUtils::CreateImageView(device, 
+													  _shadow_image, 
+													  shadow_format, 
+													  VK_IMAGE_ASPECT_DEPTH_BIT, 
+													  1);
+
+	VkSamplerCreateInfo sampler_info{};
+	sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	sampler_info.magFilter = VK_FILTER_LINEAR;
+	sampler_info.minFilter = VK_FILTER_LINEAR;
+	sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	sampler_info.anisotropyEnable = VK_FALSE;
+	sampler_info.maxAnisotropy = 1.0f;
+	sampler_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+	sampler_info.unnormalizedCoordinates = VK_FALSE;
+	sampler_info.compareEnable = VK_FALSE;
+	sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+	sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_info.mipLodBias = 0.0f;
+	sampler_info.minLod = 0.0f;
+	sampler_info.maxLod = 0.0f;
+	
+	if (vkCreateSampler(device, &sampler_info, nullptr, &_shadow_sampler) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create shadow sampler!");
+	}
+
+	_shadow_image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 }
 
 void Renderer::CreateColorResources() 

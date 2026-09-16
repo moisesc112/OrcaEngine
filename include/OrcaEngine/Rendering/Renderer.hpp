@@ -79,6 +79,7 @@ private:
 	void CreateDescriptorSetLayout();
 	void CreateGraphicsPipeline();
 	void CreateCommandPool();
+	void CreateShadowResources();
 	void CreateColorResources();
 	void CreateDepthResources();
 	VkFormat FindDepthFormat();
@@ -161,6 +162,8 @@ private:
 						 int32_t tex_height, 
 						 uint32_t mip_levels);
 
+	void DestroyShadowResources();
+
 	static std::vector<char> ReadFile(const std::string& filename);
 
 	GLFWwindow* _window = nullptr;
@@ -222,4 +225,7 @@ private:
 	VkSampler _shadow_sampler = VK_NULL_HANDLE;
 	
 	VkImageLayout _shadow_image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+	std::uint32_t _shadow_map_width = 2048;
+	std::uint32_t _shadow_map_height = 2048;
 };

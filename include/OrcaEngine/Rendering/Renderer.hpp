@@ -145,6 +145,10 @@ private:
 							 RenderBundle& render_bundle,
 							 VkExtent2D& viewport_extent);
 
+	void RecordShadowPass();
+	void RecordScenePass(VkCommandBuffer command_buffer, RenderBundle& render_bundle, VkExtent2D& viewport_extent);
+	void RecordEditorPass(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data);
+
 	void CreateSyncObjects();
 	void RecreateSwapchain();
 
@@ -211,4 +215,11 @@ private:
 	VkImage _viewport_depth_image = VK_NULL_HANDLE;
 	VkDeviceMemory _viewport_depth_image_memory = VK_NULL_HANDLE;
 	VkImageView _viewport_depth_image_view = VK_NULL_HANDLE;
+
+	VkImage _shadow_image = VK_NULL_HANDLE;
+	VkDeviceMemory _shadow_image_memory = VK_NULL_HANDLE;
+	VkImageView _shadow_image_view = VK_NULL_HANDLE;
+	VkSampler _shadow_sampler = VK_NULL_HANDLE;
+	
+	VkImageLayout _shadow_image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 };

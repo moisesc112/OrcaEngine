@@ -38,6 +38,13 @@ void EntityManager::DestroyEntity(Entity entity)
     }
 }
 
+void EntityManager::Clear()
+{
+    _entity_ids.clear();
+    _generations.clear();
+    _alive_entities.clear();
+}
+
 bool EntityManager::IsEntityAlive(Entity entity) const
 {
     return entity.id < _generations.size() && 

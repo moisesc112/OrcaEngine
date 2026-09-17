@@ -11,6 +11,7 @@ public:
 
     Entity CreateEntity();
     void DestroyEntity(Entity entity);
+    void Clear();
 
     bool IsEntityAlive(Entity entity) const;
     std::vector<Entity>& GetAliveEntities();

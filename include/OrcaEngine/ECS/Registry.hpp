@@ -12,16 +12,24 @@
 
 class Registry {
 public:
-    Entity CreateEntity() {
+    Entity CreateEntity() 
+    {
         return _entity_manager.CreateEntity();
     }
 
-    void DestroyEntity(Entity entity) {
+    void DestroyEntity(Entity entity) 
+    {
         for (auto& [name, pool] : _component_pools) {
             pool->RemoveEntity(entity);
         }
 
         _entity_manager.DestroyEntity(entity);
+    }
+
+    void Clear()
+    {
+        _component_pools.clear();
+        _entity_manager.Clear();
     }
 
     template<typename T>

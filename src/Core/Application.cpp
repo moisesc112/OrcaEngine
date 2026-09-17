@@ -41,6 +41,16 @@ void Application::Run()
 
 		_editor_ui.BeginFrame();
 		_editor_ui.Draw(_light_animation_enabled);
+
+		if (_editor_ui.IsSaveSceneRequested()) {
+			SceneSerializer::Serialize(_registry, _editor_ui.GetSceneFilepath());
+		}
+
+		if (_editor_ui.IsOpenSceneRequested()) {
+			SceneSerializer::Deserialize(_registry, _editor_ui.GetSceneFilepath());
+		}
+
+		_editor_ui.ClearSceneRequests();
 		_editor_ui.EndFrame();
 
 		UpdateCamera(delta_time);

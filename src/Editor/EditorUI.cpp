@@ -17,6 +17,7 @@
 #include <imgui_impl_vulkan.h>
 
 #include <iostream>
+#include <filesystem>
 
 
 EditorUI::EditorUI() {}
@@ -91,6 +92,8 @@ void EditorUI::BeginFrame()
 void EditorUI::Draw(bool& light_animation_enabled)
 {
     DrawDockSpace();
+    DrawMenuBar();
+    DrawOpenScenePopup();
     DrawScenePanel();
     DrawViewport();
     DrawInspectorPanel();
@@ -110,6 +113,71 @@ ImDrawData* EditorUI::GetDrawData()
 void EditorUI::DrawDockSpace()
 {
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+}
+
+void EditorUI::DrawMenuBar()
+{
+    bool open_scene_popup = false;
+
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("Open Scene")) {
+                open_scene_popup = true;
+            }
+
+            if (ImGui::MenuItem("Save Scene")) {
+                _save_scene_requested = true;
+            }
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMainMenuBar();
+    }
+
+    if (open_scene_popup) {
+        ImGui::OpenPopup("Open Scene");
+    }
+}
+
+void EditorUI::DrawOpenScenePopup()
+{
+    if (ImGui::BeginPopupModal("Open Scene", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        std::filesystem::path scenes_directory = "scenes";
+
+        if (std::filesystem::exists(scenes_directory)) {
+            for (const auto& entry : std::filesystem::directory_iterator(scenes_directory)) {
+                if (!entry.is_regular_file()) {
+                    continue;
+                }
+
+                if (entry.path().extension() != ".json") {
+                    continue;
+                }
+
+                std::string filename = entry.path().filename().string();
+
+                if (ImGui::Selectable(filename.c_str())) {
+                    _scene_filepath = entry.path().string();
+
+                    _open_scene_requested = true;
+
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+        }
+        else {
+            ImGui::TextDisabled("Scenes directory not found");
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::Button("Cancel")) {
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
 }
 
 void EditorUI::DrawDebugPanel(bool& light_animation_enabled)
@@ -152,7 +220,7 @@ void EditorUI::DrawDebugPanel(bool& light_animation_enabled)
     ImGui::SeparatorText("Light Animation");
 
     ImGui::Checkbox("Enable Light Animation", &light_animation_enabled);
-    
+
     ImGui::End();
 }
 
@@ -237,6 +305,12 @@ void EditorUI::SetSelectedEntity(Entity entity)
 void EditorUI::SetViewportTexture(VkSampler sampler, VkImageView image_view)
 {
     _viewport_descriptor_set = ImGui_ImplVulkan_AddTexture(sampler, image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+}
+
+void EditorUI::ClearSceneRequests()
+{
+    _save_scene_requested = false;
+    _open_scene_requested = false;
 }
 
 

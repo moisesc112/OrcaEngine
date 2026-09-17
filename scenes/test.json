@@ -29,28 +29,6 @@
             }
         },
         {
-            "material": 0,
-            "mesh": 0,
-            "name": "Viking Room",
-            "transform": {
-                "position": [
-                    -0.4830000102519989,
-                    0.0,
-                    0.0
-                ],
-                "rotation": [
-                    0.0,
-                    0.0,
-                    0.0
-                ],
-                "scale": [
-                    1.0,
-                    1.0,
-                    1.0
-                ]
-            }
-        },
-        {
             "material": 1,
             "mesh": 1,
             "name": "Iron Golem",

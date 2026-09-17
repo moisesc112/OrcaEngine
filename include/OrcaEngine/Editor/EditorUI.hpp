@@ -5,6 +5,7 @@
 #include <vulkan/vulkan_raii.hpp>
 
 #include <optional>
+#include <string>
 
 class Window;
 class VulkanContext;
@@ -43,8 +44,17 @@ public:
     bool IsViewportHovered() { return _is_viewport_hovered; }
     bool IsViewportFocused() { return _is_viewport_focused; }
 
+    bool IsSaveSceneRequested() { return _save_scene_requested; }
+    bool IsOpenSceneRequested() { return _open_scene_requested; }
+
+    std::string& GetSceneFilepath() { return _scene_filepath; }
+
+    void ClearSceneRequests();
+
 private:
     void DrawDockSpace();
+    void DrawMenuBar();
+    void DrawOpenScenePopup();
     void DrawDebugPanel(bool& light_animation_enabled);
     void DrawScenePanel();
     void DrawInspectorPanel();
@@ -62,6 +72,10 @@ private:
 
     VkDescriptorSet _viewport_descriptor_set = VK_NULL_HANDLE;
     VkExtent2D _viewport_extent = { 0, 0 };
+
+    bool _save_scene_requested = false;
+    bool _open_scene_requested = false;
+    std::string _scene_filepath = "scenes/default.json";
 
     std::optional<Entity> _selected_entity;
 };

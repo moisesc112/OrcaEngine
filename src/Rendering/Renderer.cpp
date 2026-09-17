@@ -165,18 +165,21 @@ void Renderer::RegisterMeshes()
 {
 	_meshes[0] = { .model_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/viking_room.obj" };
 	_meshes[1] = { .model_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/iron_golem.obj" };
+	_meshes[2] = { .model_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/grass_block.obj" };
 }
 
 void Renderer::RegisterTextures()
 {
 	_textures[0] = { .texture_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/viking_room.png" };
 	_textures[1] = { .texture_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/iron_golem.png" };
+	_textures[2] = { .texture_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/grass_block.png" };
 }
 
 void Renderer::RegisterMaterials()
 {
 	_materials[0] = { .texture_id = 0 };
 	_materials[1] = { .texture_id = 1};
+	_materials[2] = { .texture_id = 2};
 }
 
 QueueFamilyIndices Renderer::FindQueueFamilies(VkPhysicalDevice device) 

@@ -47,6 +47,7 @@ target_include_directories(OrcaEngine PRIVATE external/stb)
 target_include_directories(OrcaEngine PRIVATE external/tinyobjloader)
 target_include_directories(OrcaEngine PRIVATE external/imgui)
 target_include_directories(OrcaEngine PRIVATE external/imgui/backends)
+target_include_directories(OrcaEngine PRIVATE external/nlohmann)
 
 target_link_libraries(OrcaEngine PRIVATE Vulkan::Vulkan 
 										 glm::glm 

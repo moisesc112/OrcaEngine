@@ -59,11 +59,11 @@ private:
 	void UpdateCamera(float delta_time);
 	void UpdateCameraRotation();
 	void UpdateViewport();
-	void UpdateScene();
+	void UpdateScene(float delta_time);
 	void RenderFrame();
 
 	void CreateDefaultScene();
-	
+
 	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 	Window _window;
@@ -74,4 +74,6 @@ private:
 	Registry _registry;
 	Camera _camera;
 	Entity _entity{};
+
+	bool _light_animation_enabled = false;
 };

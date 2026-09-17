@@ -1854,11 +1854,6 @@ void Renderer::UpdateShadowUniformBuffer(uint32_t current_image, RenderBundle& r
 
 void Renderer::UpdateUniformBuffer(uint32_t current_image, Camera& camera, RenderBundle& render_bundle) 
 {
-	static auto start_time = std::chrono::high_resolution_clock::now();
-
-	auto current_time = std::chrono::high_resolution_clock::now();
-	float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
-
 	float aspect_ratio = _viewport_extent.width / (float)_viewport_extent.height;
 
 	UniformBufferObject ubo{};

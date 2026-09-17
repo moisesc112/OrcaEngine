@@ -30,7 +30,7 @@ public:
     void DestroyViewportTexture();
 
     void BeginFrame();
-    void Draw();
+    void Draw(bool& light_animation_enabled);
     void EndFrame();
 
     ImDrawData* GetDrawData();
@@ -45,7 +45,7 @@ public:
 
 private:
     void DrawDockSpace();
-    void DrawDebugPanel();
+    void DrawDebugPanel(bool& light_animation_enabled);
     void DrawScenePanel();
     void DrawInspectorPanel();
     void DrawViewport();

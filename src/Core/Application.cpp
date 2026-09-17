@@ -40,11 +40,11 @@ void Application::Run()
 		glfwPollEvents();
 
 		_editor_ui.BeginFrame();
-		_editor_ui.Draw();
+		_editor_ui.Draw(_light_animation_enabled);
 		_editor_ui.EndFrame();
 
 		UpdateCamera(delta_time);
-		UpdateScene();
+		UpdateScene(delta_time);
 		RenderFrame();
 
 		UpdateViewport();
@@ -188,7 +188,7 @@ void Application::UpdateViewport()
 	}
 }
 
-void Application::UpdateScene()
+void Application::UpdateScene(float delta_time)
 {
 	{
 	auto& transform = _registry.GetComponent<TransformComponent>(static_cast<Entity>(0));
@@ -198,6 +198,13 @@ void Application::UpdateScene()
 	{
 	auto& transform = _registry.GetComponent<TransformComponent>(static_cast<Entity>(1));
 		//transform.position.y += 0.0001f;
+	}
+
+	if (_light_animation_enabled) {
+		for (Entity entity : _registry.View<TransformComponent, LightComponent>()) {
+			auto& transform = _registry.GetComponent<TransformComponent>(entity);
+			transform.rotation.z += 20.0f * delta_time;
+		}
 	}
 }
 

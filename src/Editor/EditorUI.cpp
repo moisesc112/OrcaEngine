@@ -88,13 +88,13 @@ void EditorUI::BeginFrame()
     ImGui::NewFrame();
 } 
 
-void EditorUI::Draw()
+void EditorUI::Draw(bool& light_animation_enabled)
 {
     DrawDockSpace();
     DrawScenePanel();
     DrawViewport();
     DrawInspectorPanel();
-    DrawDebugPanel();
+    DrawDebugPanel(light_animation_enabled);
 }
 
 void EditorUI::EndFrame()
@@ -112,7 +112,7 @@ void EditorUI::DrawDockSpace()
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
 }
 
-void EditorUI::DrawDebugPanel()
+void EditorUI::DrawDebugPanel(bool& light_animation_enabled)
 {
     //ImGui::SetNextWindowPos(ImVec2(10.0f, 300.0f), ImGuiCond_Appearing);
     //ImGui::SetNextWindowSize(ImVec2(220.0f, 250.0f), ImGuiCond_Appearing);
@@ -149,6 +149,10 @@ void EditorUI::DrawDebugPanel()
 
     ImGui::DragFloat("Slope Bias", &shadow_settings.slope_bias, 0.0001f);
 
+    ImGui::SeparatorText("Light Animation");
+
+    ImGui::Checkbox("Enable Light Animation", &light_animation_enabled);
+    
     ImGui::End();
 }
 

@@ -1871,6 +1871,11 @@ void Renderer::UpdateUniformBuffer(uint32_t current_image, Camera& camera, Rende
 	ubo.light_view_projection = render_bundle.directional_light.light_view_projection;
 
 	ubo.camera_position = camera.GetPosition();
+
+	ubo.shadow_enabled = _shadow_settings.enabled ? 1 : 0;
+	ubo.shadow_filter = static_cast<int>(_shadow_settings.filter);
+	ubo.shadow_constant_bias = _shadow_settings.constant_bias;
+	ubo.shadow_slope_bias = _shadow_settings.slope_bias;
 	
 	memcpy(_uniform_buffers_mapped[current_image], &ubo, sizeof(ubo));
 }

@@ -4,6 +4,7 @@
 #include <OrcaEngine/Rendering/RenderTypes.hpp>
 #include <OrcaEngine/Rendering/Vertex.hpp>
 #include <OrcaEngine/Camera/Camera.hpp>
+#include <OrcaEngine/Rendering/ShadowSettings.hpp>
 
 #include <vulkan/vulkan_raii.hpp>
 
@@ -39,10 +40,15 @@ struct UniformBufferObject {
 
 	alignas(16) glm::vec3 light_direction;
 	alignas(16) glm::vec3 light_color;
-	alignas(16) glm::mat4 light_view_projection;
 	alignas(4) float light_intensity;
+	alignas(16) glm::mat4 light_view_projection;
 
 	alignas(16) glm::vec3 camera_position;
+
+	alignas(4) int shadow_enabled;
+	alignas(4) int shadow_filter;
+	alignas(4) float shadow_constant_bias;
+	alignas(4) float shadow_slope_bias;
 };
 
 class Renderer {
@@ -72,6 +78,8 @@ public:
 	VkSampler GetViewportSampler() { return _viewport_sampler; }
 	VkImageView GetViewportImageView() { return _viewport_image_view; }
 	VkExtent2D GetViewportExtent() { return _viewport_extent; }
+
+	ShadowSettings& GetShadowSettings() { return _shadow_settings; }
 
 private:
 
@@ -248,4 +256,6 @@ private:
 
 	std::uint32_t _shadow_map_width = 2048;
 	std::uint32_t _shadow_map_height = 2048;
+
+	ShadowSettings _shadow_settings;
 };

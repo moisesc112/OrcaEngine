@@ -10,6 +10,11 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
 	mat4 light_view_projection;
 
 	vec3 camera_position;
+
+	int shadow_enabled;
+	int shadow_filter;
+	float shadow_constant_bias;
+	float shadow_slope_bias;
 } ubo;
 
 layout(location = 0) in vec3 frag_color;
@@ -36,19 +41,24 @@ float CalculateShadowFactor(vec4 light_position, vec3 normal, vec3 light_directi
 	float closest_depth = texture(shadow_map, proj_coords.xy).r;
 
 	float ndotl = max(dot(normal, light_direction), 0.0);
-	float bias = max(0.005 * (1.0 - ndotl), 0.0005);
+	float bias = max(ubo.shadow_slope_bias * (1.0 - ndotl), ubo.shadow_constant_bias);
 
 	float shadow_factor = 0.0;
 
-	vec2 texel_size = 1.0 / textureSize(shadow_map, 0);
-
-	for (int x = -1; x <= 1; x++) {
-		for (int y = -1; y <= 1; y++) {
-			float pcf_depth = texture(shadow_map, proj_coords.xy + vec2(x, y) * texel_size).r;
-			shadow_factor += current_depth - bias > pcf_depth ? 1.0 : 0.0;
-		}
+	if (ubo.shadow_filter == 0) {
+		shadow_factor = current_depth - bias > closest_depth ? 1.0 : 0.0;
 	}
-	shadow_factor /= 9.0;
+	else {
+		vec2 texel_size = 1.0 / textureSize(shadow_map, 0);
+	
+		for (int x = -1; x <= 1; x++) {
+			for (int y = -1; y <= 1; y++) {
+				float pcf_depth = texture(shadow_map, proj_coords.xy + vec2(x, y) * texel_size).r;
+				shadow_factor += current_depth - bias > pcf_depth ? 1.0 : 0.0;
+			}
+		}
+		shadow_factor /= 9.0;
+	}
 
 	return shadow_factor;
 }
@@ -72,7 +82,11 @@ void main()
 	float specular_amount = pow(max(dot(view_direction, reflect_direction), 0.0), shininess);
 	float specular = specular_strength * specular_amount * ubo.light_intensity;
 
-	float shadow_factor = CalculateShadowFactor(frag_light_position, normal, light_direction);
+	float shadow_factor = 0.0;
+
+	if (ubo.shadow_enabled != 0) {
+		shadow_factor = CalculateShadowFactor(frag_light_position, normal, light_direction);
+	}
 
 	vec3 lighting = ambient + (1.0 - shadow_factor) * (diffuse + specular);
 

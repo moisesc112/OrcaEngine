@@ -10,6 +10,11 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
 	mat4 light_view_projection;
 
 	vec3 camera_position;
+
+	int shadow_enabled;
+	int shadow_filter;
+	float shadow_constant_bias;
+	float shadow_slope_bias;
 } ubo;
 
 layout(push_constant) uniform PushConstants {

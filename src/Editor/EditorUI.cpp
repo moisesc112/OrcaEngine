@@ -4,6 +4,7 @@
 #include <OrcaEngine/Rendering/Swapchain.hpp>
 #include <OrcaEngine/Rendering/Renderer.hpp>
 #include <OrcaEngine/ECS/Registry.hpp>
+#include <OrcaEngine/Rendering/ShadowSettings.hpp>
 
 #include <OrcaEngine/ECS/Components/TransformComponent.hpp>
 #include <OrcaEngine/ECS/Components/NameComponent.hpp>
@@ -131,6 +132,22 @@ void EditorUI::DrawDebugPanel()
 
     ImGui::Text("Resolution: %u x %u", _swapchain->GetExtent().width, _swapchain->GetExtent().height);
     ImGui::Text("MSAA: %ux", _vulkan_context->GetMsaaSamples());
+
+    ImGui::SeparatorText("Shadows");
+
+    ShadowSettings& shadow_settings = _renderer->GetShadowSettings();
+
+    ImGui::Checkbox("Enable Shadows", &shadow_settings.enabled);
+
+    const char* shadow_filters[] = { "Hard", "PCF" };
+    int current_filter = static_cast<int>(shadow_settings.filter);
+
+    ImGui::Combo("Shadow Filter", &current_filter, shadow_filters, IM_ARRAYSIZE(shadow_filters));
+    shadow_settings.filter = static_cast<ShadowFilter>(current_filter);
+
+    ImGui::DragFloat("Constant Bias", &shadow_settings.constant_bias, 0.0001f);
+
+    ImGui::DragFloat("Slope Bias", &shadow_settings.slope_bias, 0.0001f);
 
     ImGui::End();
 }

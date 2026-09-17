@@ -89,6 +89,7 @@ void Application::InitRenderer()
 
 void Application::InitRegistry()
 {
+	// TODO add check, if can't deserialize, call CreateDefaultScene
 	SceneSerializer::Deserialize(_registry, "scenes/default.json");
 }
 
@@ -268,6 +269,8 @@ void Application::CreateDefaultScene()
 		_registry.AddComponent<MeshComponent>(entity, MeshComponent{ .mesh_id = 2 });
 		_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 2 });
 	}
+
+	SceneSerializer::Serialize(_registry, "scenes/default.json");
 }
 
 void Application::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {

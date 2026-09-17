@@ -23,15 +23,32 @@ layout(binding = 2) uniform sampler2D shadow_map;
 
 layout(location = 0) out vec4 out_color;
 
-float CalculateShadowFactor(vec4 light_position)
+float CalculateShadowFactor(vec4 light_position, vec3 normal, vec3 light_direction)
 {
 	vec3 proj_coords = light_position.xyz / light_position.w;
 	proj_coords.xy = proj_coords.xy * 0.5 + 0.5;
 
+	if (proj_coords.z > 1.0) {
+		return 0.0;
+	}
+
 	float current_depth = proj_coords.z;
 	float closest_depth = texture(shadow_map, proj_coords.xy).r;
 
-	float shadow_factor = current_depth > closest_depth ? 1.0 : 0.0;
+	float ndotl = max(dot(normal, light_direction), 0.0);
+	float bias = max(0.005 * (1.0 - ndotl), 0.0005);
+
+	float shadow_factor = 0.0;
+
+	vec2 texel_size = 1.0 / textureSize(shadow_map, 0);
+
+	for (int x = -1; x <= 1; x++) {
+		for (int y = -1; y <= 1; y++) {
+			float pcf_depth = texture(shadow_map, proj_coords.xy + vec2(x, y) * texel_size).r;
+			shadow_factor += current_depth - bias > pcf_depth ? 1.0 : 0.0;
+		}
+	}
+	shadow_factor /= 9.0;
 
 	return shadow_factor;
 }
@@ -55,7 +72,7 @@ void main()
 	float specular_amount = pow(max(dot(view_direction, reflect_direction), 0.0), shininess);
 	float specular = specular_strength * specular_amount * ubo.light_intensity;
 
-	float shadow_factor = CalculateShadowFactor(frag_light_position);
+	float shadow_factor = CalculateShadowFactor(frag_light_position, normal, light_direction);
 
 	vec3 lighting = ambient + (1.0 - shadow_factor) * (diffuse + specular);
 

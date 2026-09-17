@@ -17,6 +17,12 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
 	float shadow_slope_bias;
 } ubo;
 
+layout(push_constant) uniform PushConstants {
+	mat4 model;
+	vec4 base_color;
+	int use_texture;
+} push_constants;
+
 layout(location = 0) in vec3 frag_color;
 layout(location = 1) in vec2 frag_tex_coord;
 layout(location = 2) in vec3 frag_normal;
@@ -90,7 +96,14 @@ void main()
 
 	vec3 lighting = ambient + (1.0 - shadow_factor) * (diffuse + specular);
 
-	vec3 texture_color = texture(tex_sampler, frag_tex_coord).rgb;
+	vec3 base_color;
 
-	out_color = vec4(texture_color * lighting, 1.0);
+	if (push_constants.use_texture != 0) {
+		base_color = texture(tex_sampler, frag_tex_coord).rgb;
+	}
+	else {
+		base_color = push_constants.base_color.rgb;
+	}
+
+	out_color = vec4(base_color * lighting, 1.0);
 }

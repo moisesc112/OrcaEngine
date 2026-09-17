@@ -4,7 +4,7 @@ layout(set = 0, binding = 0) uniform ShadowUniformBufferObject {
     mat4 light_view_projection;
 } shadow_ubo;
 
-layout(push_constant) uniform PushConstants {
+layout(push_constant) uniform ShadowPushConstants {
     mat4 model;
 } push_constants;
 

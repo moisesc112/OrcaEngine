@@ -37,6 +37,12 @@ struct RenderBundle {
 
 struct PushConstantData {
     alignas(16) glm::mat4 model_matrix;
+    alignas(16) glm::vec4 base_color;
+    alignas(4) int use_texture;
+};
+
+struct ShadowPushConstantData {
+    alignas(16) glm::mat4 model_matrix;
 };
 
 struct MeshResource {
@@ -53,7 +59,9 @@ struct MeshResource {
 };
 
 struct MaterialResource {
-    TextureId texture_id;
+    TextureId texture_id = 0;
+    glm::vec3 color{ 1.0f };
+    bool use_texture = true;
 };
 
 struct TextureResource {

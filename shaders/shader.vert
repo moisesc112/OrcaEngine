@@ -19,6 +19,8 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
 
 layout(push_constant) uniform PushConstants {
 	mat4 model;
+	vec4 base_color;
+	int use_texture;
 } push_constants;
 
 layout(location = 0) in vec3 in_position;

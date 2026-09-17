@@ -166,6 +166,7 @@ void Renderer::RegisterMeshes()
 	_meshes[0] = { .model_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/viking_room.obj" };
 	_meshes[1] = { .model_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/iron_golem.obj" };
 	_meshes[2] = { .model_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/grass_block.obj" };
+	_meshes[3] = { .model_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/stanford_dragon_decimated.obj" };
 }
 
 void Renderer::RegisterTextures()
@@ -177,9 +178,17 @@ void Renderer::RegisterTextures()
 
 void Renderer::RegisterMaterials()
 {
-	_materials[0] = { .texture_id = 0 };
-	_materials[1] = { .texture_id = 1};
-	_materials[2] = { .texture_id = 2};
+	_materials[0] = { .texture_id = 0,
+					  .use_texture = true };
+
+	_materials[1] = { .texture_id = 1,
+					  .use_texture = true };
+
+	_materials[2] = { .texture_id = 2,
+					  .use_texture = true };
+
+	_materials[3] = { .color = { 0.45f, 0.45f, 0.45f },
+					  .use_texture = false };
 }
 
 QueueFamilyIndices Renderer::FindQueueFamilies(VkPhysicalDevice device) 
@@ -439,7 +448,7 @@ void Renderer::CreateShadowPipeline()
 	VkPushConstantRange push_constant_range{};
 	push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 	push_constant_range.offset = 0;
-	push_constant_range.size = sizeof(PushConstantData);
+	push_constant_range.size = sizeof(ShadowPushConstantData);
 
 	VkPipelineLayoutCreateInfo pipeline_layout_info{};
 	pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -600,7 +609,7 @@ void Renderer::CreateGraphicsPipeline()
 	dynamic_state.pDynamicStates = dynamic_states.data();
 
 	VkPushConstantRange push_constant_range{};
-	push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	push_constant_range.offset = 0;
 	push_constant_range.size = sizeof(PushConstantData);
 
@@ -1061,16 +1070,26 @@ void Renderer::LoadModel(MeshResource& mesh)
 				attrib.vertices[3 * index.vertex_index + 2]
 			};
 
-			vertex.tex_coord = {
-				attrib.texcoords[2 * index.texcoord_index + 0],
-				1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-			};
+			if (index.texcoord_index >= 0) {
+				vertex.tex_coord = {
+					attrib.texcoords[2 * index.texcoord_index + 0],
+					1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+				};
+			}
+			else {
+				vertex.tex_coord = { 0.0f, 0.0f };
+			}
 
-			vertex.normal = {
-				attrib.normals[3 * index.normal_index + 0],
-				attrib.normals[3 * index.normal_index + 1],
-				attrib.normals[3 * index.normal_index + 2]
-			};
+			if (index.normal_index >= 0) {
+				vertex.normal = {
+					attrib.normals[3 * index.normal_index + 0],
+					attrib.normals[3 * index.normal_index + 1],
+					attrib.normals[3 * index.normal_index + 2]
+				};
+			}
+			else {
+				vertex.normal = { 0.0f, 0.0f, 0.0f };
+			}
 
 			vertex.color = { 1.0f, 1.0f, 1.0f };
 
@@ -1517,10 +1536,10 @@ void Renderer::RecordShadowPass(VkCommandBuffer command_buffer, RenderBundle& re
 		VkBuffer vertex_buffers[] = { mesh.vertex_buffer };
 		VkDeviceSize offsets[] = { 0 };
 
-		PushConstantData push_constants{};
+		ShadowPushConstantData push_constants{};
 		push_constants.model_matrix = render_item.model_matrix;
 
-		vkCmdPushConstants(command_buffer, _pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantData), &push_constants);
+		vkCmdPushConstants(command_buffer, _shadow_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ShadowPushConstantData), &push_constants);
 
 		vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffers, offsets);
 
@@ -1651,8 +1670,10 @@ void Renderer::RecordScenePass(VkCommandBuffer command_buffer, RenderBundle& ren
 
 		PushConstantData push_constants{};
 		push_constants.model_matrix = render_item.model_matrix;
+		push_constants.base_color = glm::vec4(material.color, 1.0f);
+		push_constants.use_texture = material.use_texture ? 1 : 0;
 
-		vkCmdPushConstants(command_buffer, _pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantData), &push_constants);
+		vkCmdPushConstants(command_buffer, _pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstantData), &push_constants);
 
 		vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffers, offsets);
 

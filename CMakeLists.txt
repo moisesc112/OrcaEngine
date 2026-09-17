@@ -22,7 +22,8 @@ add_executable (OrcaEngine "src/main.cpp"
 						   "src/Core/Window.cpp"
 						   "src/Editor/EditorUI.cpp"
 						   "src/ECS/EntityManager.cpp"
-						   "src/Camera/Camera.cpp")
+						   "src/Camera/Camera.cpp"
+						   "src/Scene/SceneSerializer.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET OrcaEngine PROPERTY CXX_STANDARD 20)

@@ -238,10 +238,9 @@ void EditorUI::DrawScenePanel()
             entity_name = _registry->GetComponent<NameComponent>(entity).name;
         }
 
-        bool selected = false;
+        bool is_selected = entity == _selected_entity;
 
-        if (ImGui::Selectable(entity_name.c_str(), selected)) {
-            selected = !selected;
+        if (ImGui::Selectable(entity_name.c_str(), is_selected)) {
             SetSelectedEntity(entity);
         }
     }

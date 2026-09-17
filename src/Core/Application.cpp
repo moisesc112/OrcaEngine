@@ -1,5 +1,6 @@
 #include <OrcaEngine/Core/Application.hpp>
 #include <OrcaEngine/Rendering/RenderExtraction.hpp>
+#include <OrcaEngine/Scene/SceneSerializer.hpp>
 
 #include <OrcaEngine/ECS/Components/TransformComponent.hpp>
 #include <OrcaEngine/ECS/Components/MeshComponent.hpp>
@@ -88,53 +89,7 @@ void Application::InitRenderer()
 
 void Application::InitRegistry()
 {
-	{
-		Entity entity = _registry.CreateEntity();
-
-		_registry.AddComponent<NameComponent>(entity, NameComponent{ .name = "Directional Light"});
-		_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(0.0f),
-																			   .rotation = glm::vec3(-45.0f, 30.0f, 0.0f),
-																			   .scale = glm::vec3(1.0f) });
-
-		_registry.AddComponent<LightComponent>(entity, LightComponent{ .color = glm::vec3(1.0f),
-																	   .intensity = 1.0f });
-	}
-
-	{
-		Entity entity = _registry.CreateEntity();
-
-		_registry.AddComponent<NameComponent>(entity, NameComponent{ .name = "Viking Room" });
-		_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(0.0f),
-																			   .rotation = glm::vec3(0.0f),
-																			   .scale = glm::vec3(1.0f) });
-
-		_registry.AddComponent<MeshComponent>(entity, MeshComponent{ .mesh_id = 0 });
-		_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 0 });
-	}
-
-	{
-		Entity entity = _registry.CreateEntity();
-
-		_registry.AddComponent<NameComponent>(entity, NameComponent{ .name = "Iron Golem" });
-		_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(-1.0f, 1.0f, 0.0f),
-																			   .rotation = glm::vec3(90.0f, -90.0f, 0.0f),
-																			   .scale = glm::vec3(0.05f) });
-
-		_registry.AddComponent<MeshComponent>(entity, MeshComponent{ .mesh_id = 1 });
-		_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 1 });
-	}
-
-	{
-		Entity entity = _registry.CreateEntity();
-
-		_registry.AddComponent<NameComponent>(entity, NameComponent{ .name = "Grass Block" });
-		_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(-1.0f, 1.0f, -2.5f),
-																			   .rotation = glm::vec3(90.0f, 0.0f, 0.0f),
-																			   .scale = glm::vec3(1.0f) });
-
-		_registry.AddComponent<MeshComponent>(entity, MeshComponent{ .mesh_id = 2 });
-		_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 2 });
-	}
+	SceneSerializer::Deserialize(_registry, "scenes/default.json");
 }
 
 void Application::InitEditorUI()
@@ -262,6 +217,57 @@ void Application::RenderFrame()
 						_camera);
 
 	_framebuffer_resized = false;
+}
+
+void Application::CreateDefaultScene()
+{
+	{
+		Entity entity = _registry.CreateEntity();
+
+		_registry.AddComponent<NameComponent>(entity, NameComponent{ .name = "Directional Light"});
+		_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(0.0f),
+																			   .rotation = glm::vec3(-45.0f, 30.0f, 0.0f),
+																			   .scale = glm::vec3(1.0f) });
+
+		_registry.AddComponent<LightComponent>(entity, LightComponent{ .color = glm::vec3(1.0f),
+																	   .intensity = 1.0f });
+	}
+
+	{
+		Entity entity = _registry.CreateEntity();
+
+		_registry.AddComponent<NameComponent>(entity, NameComponent{ .name = "Viking Room" });
+		_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(0.0f),
+																			   .rotation = glm::vec3(0.0f),
+																			   .scale = glm::vec3(1.0f) });
+
+		_registry.AddComponent<MeshComponent>(entity, MeshComponent{ .mesh_id = 0 });
+		_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 0 });
+	}
+
+	{
+		Entity entity = _registry.CreateEntity();
+
+		_registry.AddComponent<NameComponent>(entity, NameComponent{ .name = "Iron Golem" });
+		_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(-1.0f, 1.0f, 0.0f),
+																			   .rotation = glm::vec3(90.0f, -90.0f, 0.0f),
+																			   .scale = glm::vec3(0.05f) });
+
+		_registry.AddComponent<MeshComponent>(entity, MeshComponent{ .mesh_id = 1 });
+		_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 1 });
+	}
+
+	{
+		Entity entity = _registry.CreateEntity();
+
+		_registry.AddComponent<NameComponent>(entity, NameComponent{ .name = "Grass Block" });
+		_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(-1.0f, 1.0f, -2.5f),
+																			   .rotation = glm::vec3(90.0f, 0.0f, 0.0f),
+																			   .scale = glm::vec3(1.0f) });
+
+		_registry.AddComponent<MeshComponent>(entity, MeshComponent{ .mesh_id = 2 });
+		_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 2 });
+	}
 }
 
 void Application::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {

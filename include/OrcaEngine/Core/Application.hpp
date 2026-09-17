@@ -62,6 +62,8 @@ private:
 	void UpdateScene();
 	void RenderFrame();
 
+	void CreateDefaultScene();
+	
 	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 	Window _window;

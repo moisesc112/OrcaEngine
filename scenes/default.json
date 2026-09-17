@@ -1,0 +1,98 @@
+{
+    "entities": [
+        {
+            "light": {
+                "color": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "intensity": 1.0
+            },
+            "name": "Directional Light",
+            "transform": {
+                "position": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "rotation": [
+                    -45.0,
+                    30.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ]
+            }
+        },
+        {
+            "material": 0,
+            "mesh": 0,
+            "name": "Viking Room",
+            "transform": {
+                "position": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ]
+            }
+        },
+        {
+            "material": 1,
+            "mesh": 1,
+            "name": "Iron Golem",
+            "transform": {
+                "position": [
+                    -1.0,
+                    1.0,
+                    0.0
+                ],
+                "rotation": [
+                    90.0,
+                    -90.0,
+                    0.0
+                ],
+                "scale": [
+                    0.05000000074505806,
+                    0.05000000074505806,
+                    0.05000000074505806
+                ]
+            }
+        },
+        {
+            "material": 2,
+            "mesh": 2,
+            "name": "Grass Block",
+            "transform": {
+                "position": [
+                    -1.0,
+                    1.0,
+                    -2.5
+                ],
+                "rotation": [
+                    90.0,
+                    0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ]
+            }
+        }
+    ]
+}

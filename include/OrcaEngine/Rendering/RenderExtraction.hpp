@@ -6,5 +6,6 @@
 namespace RenderExtraction{
 
     RenderBundle ExtractRenderBundle(Registry& registry);
+    glm::mat4 CalculateLightViewProjection(glm::vec3& light_direction);
     
 }

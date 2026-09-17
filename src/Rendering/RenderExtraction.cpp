@@ -4,7 +4,11 @@
 #include <OrcaEngine/ECS/Components/TransformComponent.hpp>
 #include <OrcaEngine/ECS/Components/LightComponent.hpp>
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <vector>
 
@@ -40,11 +44,36 @@ namespace RenderExtraction{
             directional_light.direction = transform.GetForwardDirection();
             directional_light.color = light.color;
             directional_light.intensity = light.intensity;
+            directional_light.light_view_projection = CalculateLightViewProjection(directional_light.direction);
         }
 
         RenderBundle render_bundle{render_items, directional_light};
         
         return render_bundle;
+    }
+
+    glm::mat4 CalculateLightViewProjection(glm::vec3& light_direction)
+    {
+        glm::vec3 light_position = -light_direction * 10.0f;
+        glm::vec3 scene_focus(0.0f);
+        glm::vec3 world_up(0.0f, 0.0f, 1.0f);
+
+        float ortho_extents = 10.0f;
+        float near_plane = 0.1f;
+        float far_plane = 30.0f;
+
+        glm::mat4 light_view = glm::lookAt(light_position, scene_focus, world_up);
+
+        glm::mat4 light_projection = glm::ortho(-ortho_extents,
+                                                ortho_extents,
+                                                -ortho_extents,
+                                                ortho_extents,
+                                                near_plane,
+                                                far_plane);
+
+        light_projection[1][1] *= 1.0f;
+
+        return light_projection * light_view;
     }
 
 }

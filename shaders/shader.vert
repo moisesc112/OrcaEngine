@@ -7,6 +7,7 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
 	vec3 light_direction;
 	vec3 light_color;
 	float light_intensity;
+	mat4 light_view_projection;
 
 	vec3 camera_position;
 } ubo;
@@ -24,8 +25,10 @@ layout(location = 0) out vec3 frag_color;
 layout(location = 1) out vec2 frag_tex_coord;
 layout(location = 2) out vec3 frag_normal;
 layout(location = 3) out vec3 frag_position;
+layout(location = 4) out vec4 frag_light_position;
 
-void main() {
+void main() 
+{
 	mat4 model_matrix = push_constants.model;
 	mat3 normal_matrix = transpose(inverse(mat3(model_matrix)));
 	vec4 world_position = model_matrix * vec4(in_position, 1.0);
@@ -35,4 +38,5 @@ void main() {
 	frag_tex_coord = in_tex_coord;
 	frag_normal = normalize(normal_matrix * in_normal);
 	frag_position = world_position.xyz;
+	frag_light_position = ubo.light_view_projection * world_position;
 }

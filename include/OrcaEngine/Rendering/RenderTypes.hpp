@@ -21,6 +21,7 @@ struct DirectionalLight {
     glm::vec3 direction;
     glm::vec3 color;
     float intensity;
+    glm::mat4 light_view_projection;
 };
 
 struct RenderItem {

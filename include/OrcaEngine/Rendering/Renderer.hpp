@@ -29,12 +29,17 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 const std::string MODEL_PATH = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/iron_golem.obj";
 const std::string TEXTURE_PATH = "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/iron_golem.png";
 
+struct ShadowUniformBufferObject {
+	alignas(16) glm::mat4 light_view_projection;
+};
+
 struct UniformBufferObject {
 	alignas(16) glm::mat4 view;
 	alignas(16) glm::mat4 proj;
 
 	alignas(16) glm::vec3 light_direction;
 	alignas(16) glm::vec3 light_color;
+	alignas(16) glm::mat4 light_view_projection;
 	alignas(4) float light_intensity;
 
 	alignas(16) glm::vec3 camera_position;
@@ -77,6 +82,8 @@ private:
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 
 	void CreateDescriptorSetLayout();
+	void CreateShadowDescriptorSetLayout();
+	void CreateShadowPipeline();
 	void CreateGraphicsPipeline();
 	void CreateCommandPool();
 	void CreateShadowResources();
@@ -123,6 +130,7 @@ private:
 	void CreateIndexBuffers();
 	void CreateIndexBuffer(MeshResource& mesh);
 
+	void CreateShadowUniformBuffers();
 	void CreateUniformBuffers();
 	void CreateBuffer(VkDeviceSize size, 
 					  VkBufferUsageFlags usage, 
@@ -136,6 +144,7 @@ private:
 	uint32_t FindMemoryType(uint32_t type_filter, VkMemoryPropertyFlags properties);
 	void CreateDescriptorPool();
 
+	void CreateShadowDescriptorSets();
 	void CreateDescriptorSets();
 	void CreateDescriptorSet(MaterialId material_id);
 
@@ -146,13 +155,14 @@ private:
 							 RenderBundle& render_bundle,
 							 VkExtent2D& viewport_extent);
 
-	void RecordShadowPass();
+	void RecordShadowPass(VkCommandBuffer command_buffer, RenderBundle& render_bundle);
 	void RecordScenePass(VkCommandBuffer command_buffer, RenderBundle& render_bundle, VkExtent2D& viewport_extent);
 	void RecordEditorPass(VkCommandBuffer command_buffer, uint32_t image_index, ImDrawData* imgui_draw_data);
 
 	void CreateSyncObjects();
 	void RecreateSwapchain();
 
+	void UpdateShadowUniformBuffer(uint32_t current_image, RenderBundle& render_bundle);
 	void UpdateUniformBuffer(uint32_t current_image, Camera& camera, RenderBundle& render_bundle);
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
@@ -219,12 +229,22 @@ private:
 	VkDeviceMemory _viewport_depth_image_memory = VK_NULL_HANDLE;
 	VkImageView _viewport_depth_image_view = VK_NULL_HANDLE;
 
+	VkDescriptorSetLayout _shadow_descriptor_set_layout;
+	VkPipelineLayout _shadow_pipeline_layout;
+	VkPipeline _shadow_graphics_pipeline;
+
 	VkImage _shadow_image = VK_NULL_HANDLE;
 	VkDeviceMemory _shadow_image_memory = VK_NULL_HANDLE;
 	VkImageView _shadow_image_view = VK_NULL_HANDLE;
 	VkSampler _shadow_sampler = VK_NULL_HANDLE;
 	
 	VkImageLayout _shadow_image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+	std::vector<VkBuffer> _shadow_uniform_buffers;
+	std::vector<VkDeviceMemory> _shadow_uniform_buffers_memory;
+	std::vector<void*> _shadow_uniform_buffers_mapped;
+
+	std::vector<VkDescriptorSet> _shadow_descriptor_sets;
 
 	std::uint32_t _shadow_map_width = 2048;
 	std::uint32_t _shadow_map_height = 2048;

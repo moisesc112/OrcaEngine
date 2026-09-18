@@ -36,6 +36,7 @@ public:
 
 	VkInstance GetInstance() { return _instance; }
 	VkPhysicalDevice GetPhysicalDevice() { return _physical_device; }
+	VkPhysicalDeviceProperties GetPhysicalDeviceProperties() { return _physical_device_properties; }
 	VkDevice GetLogicalDevice() { return _device; }
 	VkSurfaceKHR GetSurface() { return _surface; }
 	VkQueue GetGraphicsQueue() { return _graphics_queue; }
@@ -83,6 +84,7 @@ private:
 
 	VkPhysicalDevice _physical_device = VK_NULL_HANDLE;
 	VkDevice _device = VK_NULL_HANDLE;
+	VkPhysicalDeviceProperties _physical_device_properties;
 
 	VkQueue _graphics_queue = VK_NULL_HANDLE;
 	VkQueue _present_queue = VK_NULL_HANDLE;

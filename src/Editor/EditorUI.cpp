@@ -8,6 +8,7 @@
 
 #include <OrcaEngine/ECS/Components/TransformComponent.hpp>
 #include <OrcaEngine/ECS/Components/NameComponent.hpp>
+#include <OrcaEngine/ECS/Components/LightComponent.hpp>
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -187,39 +188,86 @@ void EditorUI::DrawDebugPanel(bool& light_animation_enabled)
 
     ImGui::Begin("Debug Options");
 
-    ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
-    ImGui::Text("Frame Time: %.2f ms", 1000.0f / ImGui::GetIO().Framerate);
+    if (ImGui::CollapsingHeader("Rendering", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+        ImGui::Text("Frame Time: %.2f ms", 1000.0f / ImGui::GetIO().Framerate);
 
-    ImGui::SeparatorText("Rendering");
+        //ImGui::Text("Vertices: %u", _renderer->GetVertices().size());
+        //ImGui::Text("Triangles: %u", _renderer->GetIndices().size() / 3);
+        ImGui::Text("Draw Calls: %u", _renderer->GetDrawCallCounter());
+        ImGui::Text("Resolution: %u x %u", _swapchain->GetExtent().width, _swapchain->GetExtent().height);
+        ImGui::Text("MSAA: %ux", _vulkan_context->GetMsaaSamples());
+    }
 
-    //ImGui::Text("Vertices: %u", _renderer->GetVertices().size());
-    //ImGui::Text("Triangles: %u", _renderer->GetIndices().size() / 3);
-    ImGui::Text("Draw Calls: %u", _renderer->GetDrawCallCounter());
+    if (ImGui::CollapsingHeader("Vulkan", ImGuiTreeNodeFlags_DefaultOpen)) {
+        auto physical_device_properties = _vulkan_context->GetPhysicalDeviceProperties();
+        ImGui::Text("GPU: %s", physical_device_properties.deviceName);
+        ImGui::Text("Engine API: Vulkan 1.3");
+        ImGui::Text("Driver API: Vulkan %u.%u.%u",
+                    VK_API_VERSION_MAJOR(physical_device_properties.apiVersion),
+                    VK_API_VERSION_MINOR(physical_device_properties.apiVersion),
+                    VK_API_VERSION_PATCH(physical_device_properties.apiVersion));
 
-    ImGui::SeparatorText("Vulkan");
+        ImGui::Text("Swapchain Images: %zu", _swapchain->GetImages().size());
+    }
+   
+    if (ImGui::CollapsingHeader("Shadows", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ShadowSettings& shadow_settings = _renderer->GetShadowSettings();
 
-    ImGui::Text("Resolution: %u x %u", _swapchain->GetExtent().width, _swapchain->GetExtent().height);
-    ImGui::Text("MSAA: %ux", _vulkan_context->GetMsaaSamples());
+        ImGui::Text("Enable Shadows");
+        ImGui::SameLine(110.0f);
+        ImGui::Checkbox("##Enable Shadows", &shadow_settings.enabled);
 
-    ImGui::SeparatorText("Shadows");
+        const char* shadow_filters[] = { "Hard", "PCF" };
+        int current_filter = static_cast<int>(shadow_settings.filter);
 
-    ShadowSettings& shadow_settings = _renderer->GetShadowSettings();
+        ImGui::PushItemWidth(80.0f);
 
-    ImGui::Checkbox("Enable Shadows", &shadow_settings.enabled);
+        ImGui::Text("Shadow Filter");
+        ImGui::SameLine(110.0f);
+        ImGui::Combo("##Shadow Filter", &current_filter, shadow_filters, IM_ARRAYSIZE(shadow_filters));
+        shadow_settings.filter = static_cast<ShadowFilter>(current_filter);
 
-    const char* shadow_filters[] = { "Hard", "PCF" };
-    int current_filter = static_cast<int>(shadow_settings.filter);
+        ImGui::Text("Constant Bias");
+        ImGui::SameLine(110.0f);
+        ImGui::DragFloat("##Constant Bias", &shadow_settings.constant_bias, 0.00001f, 0.0f, 1.0f, "%.5f");
 
-    ImGui::Combo("Shadow Filter", &current_filter, shadow_filters, IM_ARRAYSIZE(shadow_filters));
-    shadow_settings.filter = static_cast<ShadowFilter>(current_filter);
+        ImGui::Text("Slope Bias");
+        ImGui::SameLine(110.0f);
+        ImGui::DragFloat("##Slope Bias", &shadow_settings.slope_bias, 0.00001f, 0.0f, 1.0f, "%.5f");
 
-    ImGui::DragFloat("Constant Bias", &shadow_settings.constant_bias, 0.0001f);
+        ImGui::PopItemWidth();
+    }
 
-    ImGui::DragFloat("Slope Bias", &shadow_settings.slope_bias, 0.0001f);
+    if (ImGui::CollapsingHeader("Lighting", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-    ImGui::SeparatorText("Light Animation");
+        LightComponent* light = nullptr;
+        for (Entity entity : _registry->View<LightComponent>()) {
+			light = &_registry->GetComponent<LightComponent>(entity);
+            break;
+		}
 
-    ImGui::Checkbox("Enable Light Animation", &light_animation_enabled);
+        if (light) {
+
+            ImGui::Text("Animate Light");
+            ImGui::SameLine(110.0f);
+            ImGui::Checkbox("##Animate Light", &light_animation_enabled);
+
+            ImGui::PushItemWidth(80.0f);
+
+            ImGui::Text("Color");
+            ImGui::SameLine(110.0f);
+            ImGui::ColorEdit3("##Color", &light->color.x);
+
+            ImGui::Text("Intensity");
+            ImGui::SameLine(110.0f);
+            ImGui::DragFloat("##Intensity", &light->intensity, 0.05f, 0.0f, 10.0f);
+
+           ImGui::PopItemWidth();
+        }
+
+
+    }
 
     ImGui::End();
 }
@@ -260,7 +308,7 @@ void EditorUI::DrawInspectorPanel()
 
         if (_registry->HasComponent<TransformComponent>(*_selected_entity)) {
             ImGui::Separator();
-            if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))  {
+            if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
                 auto& entity_transform = _registry->GetComponent<TransformComponent>(*_selected_entity);
                 ImGui::Text("Position");
                 ImGui::SameLine(90.0f);

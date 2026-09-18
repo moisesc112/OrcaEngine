@@ -258,14 +258,47 @@ void EditorUI::DrawInspectorPanel()
         std::string entity_name = _registry->GetComponent<NameComponent>(*_selected_entity).name;
         ImGui::Text(entity_name.c_str());
 
-        ImGui::SeparatorText("Transform");
+        if (_registry->HasComponent<TransformComponent>(*_selected_entity)) {
+            ImGui::Separator();
+            if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))  {
+                auto& entity_transform = _registry->GetComponent<TransformComponent>(*_selected_entity);
+                ImGui::Text("Position");
+                ImGui::SameLine(90.0f);
+                ImGui::DragFloat3("##Position", &entity_transform.position.x, 0.05f);
 
-        auto& entity_transform = _registry->GetComponent<TransformComponent>(*_selected_entity);
-        ImGui::SliderFloat3("Position", &entity_transform.position.x, -2.0f, 2.0f);
-        ImGui::SliderFloat3("Rotation", &entity_transform.rotation.x, -360.0f, 360.0f);
-        ImGui::SliderFloat3("Scale", &entity_transform.scale.x, 0.0f, 2.0f);
+                ImGui::Text("Rotation");
+                ImGui::SameLine(90.0f);
+                ImGui::DragFloat3("##Rotation", &entity_transform.rotation.x, 1.0f);
 
-        ImGui::SeparatorText("Material");
+                ImGui::Text("Scale");
+                ImGui::SameLine(90.0f);
+                ImGui::DragFloat3(
+                    "##Scale",
+                    &entity_transform.scale.x,
+                    0.01f,
+                    0.01f,
+                    100.0f
+                );
+            }
+        }
+
+        if (_registry->HasComponent<MaterialComponent>(*_selected_entity)) {
+            ImGui::Separator();
+            if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen)) {
+
+                auto& material_component = _registry->GetComponent<MaterialComponent>(*_selected_entity);
+
+                MaterialResource& material = _renderer->GetMaterial(material_component.material_id);
+            
+                ImGui::Text("Use Texture");
+                ImGui::SameLine(90.0f);
+                ImGui::Checkbox("##Use Texture", &material.use_texture);
+
+                ImGui::Text("Color");
+                ImGui::SameLine(90.0f);
+                ImGui::ColorEdit3("##Color", &material.color.x);
+            }
+        }  
     }
     else {
         _selected_entity.reset();

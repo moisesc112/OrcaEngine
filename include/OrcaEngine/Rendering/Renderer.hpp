@@ -81,6 +81,8 @@ public:
 
 	ShadowSettings& GetShadowSettings() { return _shadow_settings; }
 
+	MaterialResource& GetMaterial(MaterialId material_id) { return _materials.at(material_id); }
+
 private:
 
 	void RegisterMeshes();

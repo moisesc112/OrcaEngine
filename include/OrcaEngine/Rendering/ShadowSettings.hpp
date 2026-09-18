@@ -8,8 +8,8 @@ enum class ShadowFilter {
 struct ShadowSettings {
     bool enabled = true;
 
-    float constant_bias = 0.0005f;
-    float slope_bias = 0.005f;
+    float constant_bias = 0.00001f;
+    float slope_bias = 0.00009f;
 
     ShadowFilter filter = ShadowFilter::PCF3X3;
 };

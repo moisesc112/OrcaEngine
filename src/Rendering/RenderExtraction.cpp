@@ -55,12 +55,12 @@ namespace RenderExtraction{
     glm::mat4 CalculateLightViewProjection(glm::vec3& light_direction)
     {
         glm::vec3 light_position = -light_direction * 10.0f;
-        glm::vec3 scene_focus(0.0f);
+        glm::vec3 scene_focus(-1.0f, 1.0f, -1.0f);
         glm::vec3 world_up(0.0f, 0.0f, 1.0f);
 
-        float ortho_extents = 10.0f;
+        float ortho_extents = 2.5f;
         float near_plane = 0.1f;
-        float far_plane = 30.0f;
+        float far_plane = 15.0f;
 
         glm::mat4 light_view = glm::lookAt(light_position, scene_focus, world_up);
 

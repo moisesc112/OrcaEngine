@@ -59,6 +59,7 @@ private:
     void DrawScenePanel();
     void DrawInspectorPanel();
     void DrawViewport();
+    void DrawConsolePanel();
 
     static void check_vk_result(VkResult err);
 

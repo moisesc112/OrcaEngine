@@ -1,4 +1,5 @@
 #include <OrcaEngine/Rendering/VulkanContext.hpp>
+#include <OrcaEngine/Core/Logger.hpp>
 
 #include <iostream>
 #include <set>
@@ -341,8 +342,17 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VulkanContext::DebugCallback(
 	const VkDebugUtilsMessengerCallbackDataEXT* p_callback_data,
 	void* p_user_data) 
 {
-
-	std::cerr << "validation layer: " << p_callback_data->pMessage << std::endl;
+	
+	if (message_severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+		Logger::Error(p_callback_data->pMessage);
+	}
+	else if (message_severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+		Logger::Warning(p_callback_data->pMessage);
+	}
+	else {
+		Logger::Info(p_callback_data->pMessage);
+	}
+	
 
 	return VK_FALSE;
 }

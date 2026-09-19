@@ -1,5 +1,6 @@
 #include <OrcaEngine/Editor/EditorUI.hpp>
 #include <OrcaEngine/Core/Window.hpp>
+#include <OrcaEngine/Core/Logger.hpp>
 #include <OrcaEngine/Rendering/VulkanContext.hpp>
 #include <OrcaEngine/Rendering/Swapchain.hpp>
 #include <OrcaEngine/Rendering/Renderer.hpp>
@@ -72,6 +73,10 @@ void EditorUI::Initialize(GLFWwindow* window,
 
 void EditorUI::DestroyViewportTexture()
 {
+    if (_viewport_descriptor_set == VK_NULL_HANDLE) {
+        return;
+    }
+
     ImGui_ImplVulkan_RemoveTexture(_viewport_descriptor_set);
     _viewport_descriptor_set = VK_NULL_HANDLE;
 }
@@ -99,6 +104,7 @@ void EditorUI::Draw(bool& light_animation_enabled)
     DrawViewport();
     DrawInspectorPanel();
     DrawDebugPanel(light_animation_enabled);
+    DrawConsolePanel();
 }
 
 void EditorUI::EndFrame()
@@ -374,6 +380,35 @@ void EditorUI::DrawViewport()
         ImGui::Image(_viewport_descriptor_set, viewport_size);
     }
 
+    ImGui::End();
+}
+
+void EditorUI::DrawConsolePanel()
+{
+    ImGui::Begin("Console");
+
+    if (ImGui::Button("Clear")) {
+        Logger::Clear();
+    }
+    
+    ImGui::Separator();
+
+    for (const LogMessage& log : Logger::GetMessages()) {
+        switch (log.level) {
+            case LogLevel::Info:
+                ImGui::Text("[Info] %s", log.message.c_str());
+                break;
+            
+            case LogLevel::Warning:
+                ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "[Warning] %s", log.message.c_str());
+                break;
+            
+            case LogLevel::Error:
+                ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "[Error] %s", log.message.c_str());
+                break;
+        }
+    }
+    
     ImGui::End();
 }
 

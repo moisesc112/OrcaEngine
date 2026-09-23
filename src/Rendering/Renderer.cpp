@@ -3,6 +3,7 @@
 #include <OrcaEngine/Rendering/Swapchain.hpp>
 #include <OrcaEngine/Rendering/VulkanUtils.hpp>
 #include <OrcaEngine/ECS/Components/TransformComponent.hpp>
+#include <OrcaEngine/Core/Logger.hpp>
 
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
@@ -17,6 +18,7 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <filesystem>
 
 Renderer::Renderer() {}
 
@@ -1111,6 +1113,8 @@ void Renderer::LoadModel(MeshResource& mesh)
 			mesh.indices.push_back(uniqueVertices[vertex]);
 		}
 	}
+
+	Logger::Info("Loaded mesh: " + std::filesystem::path(mesh.model_path).filename().string());
 }
 
 void Renderer::CreateVertexBuffers()

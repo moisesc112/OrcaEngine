@@ -1,6 +1,7 @@
 #include <OrcaEngine/Core/Application.hpp>
 #include <OrcaEngine/Rendering/RenderExtraction.hpp>
 #include <OrcaEngine/Scene/SceneSerializer.hpp>
+#include <OrcaEngine/Core/Logger.hpp>
 
 #include <OrcaEngine/ECS/Components/TransformComponent.hpp>
 #include <OrcaEngine/ECS/Components/MeshComponent.hpp>
@@ -26,6 +27,8 @@ void Application::Initialize()
 	InitRenderer();
 	InitRegistry();
 	InitEditorUI();
+
+	Logger::Info("OrcaEngine initialized");
 }
 
 void Application::Run() 

@@ -5,6 +5,7 @@
 #include <OrcaEngine/ECS/Components/MeshComponent.hpp>
 #include <OrcaEngine/ECS/Components/MaterialComponent.hpp>
 #include <OrcaEngine/ECS/Components/LightComponent.hpp>
+#include <OrcaEngine/Core/Logger.hpp>
 
 #include <json.hpp>
 
@@ -140,4 +141,6 @@ void SceneSerializer::Deserialize(Registry& registry, const std::string& filepat
             registry.AddComponent<LightComponent>(entity, light);
         }
     }
+
+    Logger::Info("Loaded scene: " + filepath);
 }

@@ -270,25 +270,20 @@ void VulkanContext::CreateLogicalDevice()
 	vulkan_13_features.dynamicRendering = VK_TRUE;
 	vulkan_13_features.synchronization2 = VK_TRUE;
 
-	VkDeviceCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	createInfo.pNext = &vulkan_13_features;
-	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queue_create_infos.size());
-	createInfo.pQueueCreateInfos = queue_create_infos.data();
-	createInfo.pEnabledFeatures = &device_features;
+	VkDeviceCreateInfo create_info{};
+	create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	create_info.pNext = &vulkan_13_features;
+	create_info.queueCreateInfoCount = static_cast<uint32_t>(queue_create_infos.size());
+	create_info.pQueueCreateInfos = queue_create_infos.data();
+	create_info.pEnabledFeatures = &device_features;
 
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(g_device_extensions.size());
-	createInfo.ppEnabledExtensionNames = g_device_extensions.data();
+	create_info.enabledExtensionCount = static_cast<uint32_t>(g_device_extensions.size());
+	create_info.ppEnabledExtensionNames = g_device_extensions.data();
 
-	if (g_enable_validation_layers) {
-		createInfo.enabledLayerCount = static_cast<uint32_t>(g_validation_layers.size());
-		createInfo.ppEnabledLayerNames = g_validation_layers.data();
-	}
-	else {
-		createInfo.enabledLayerCount = 0;
-	}
+	create_info.enabledLayerCount = 0;
+	create_info.ppEnabledLayerNames = nullptr;
 
-	if (vkCreateDevice(_physical_device, &createInfo, nullptr, &_device) != VK_SUCCESS) {
+	if (vkCreateDevice(_physical_device, &create_info, nullptr, &_device) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create logical device!");
 	}
 

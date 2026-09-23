@@ -167,6 +167,8 @@ void Renderer::RegisterMeshes()
 	_meshes[1] = { .model_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/iron_golem.obj" };
 	_meshes[2] = { .model_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/grass_block.obj" };
 	_meshes[3] = { .model_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/stanford_dragon_decimated.obj" };
+	_meshes[4] = { .model_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/wandering_sword_1.obj" };
+	_meshes[5] = { .model_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/models/wandering_sword_2.obj" };
 }
 
 void Renderer::RegisterTextures()
@@ -174,6 +176,8 @@ void Renderer::RegisterTextures()
 	_textures[0] = { .texture_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/viking_room.png" };
 	_textures[1] = { .texture_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/iron_golem.png" };
 	_textures[2] = { .texture_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/grass_block.png" };
+	_textures[3] = { .texture_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/wandering_sword_1.png" };
+	_textures[4] = { .texture_path = "C:/Users/moise/Documents/VS_projects/OrcaEngine/textures/wandering_sword_2.png" };
 }
 
 void Renderer::RegisterMaterials()
@@ -189,6 +193,12 @@ void Renderer::RegisterMaterials()
 
 	_materials[3] = { .color = { 0.45f, 0.45f, 0.45f },
 					  .use_texture = false };
+
+	_materials[4] = { .texture_id = 3,
+					  .use_texture = true };
+	
+	_materials[5] = { .texture_id = 4,
+					  .use_texture = true };
 }
 
 QueueFamilyIndices Renderer::FindQueueFamilies(VkPhysicalDevice device) 

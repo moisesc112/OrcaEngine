@@ -287,6 +287,30 @@ void Application::CreateDefaultScene()
 		_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 2 });
 	}
 
+	{
+		Entity entity = _registry.CreateEntity();
+
+		_registry.AddComponent<NameComponent>(entity, NameComponent{ .name = "Saber" });
+		_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(0.0f),
+																			   .rotation = glm::vec3(90.0f, 90.0f, 0.0f),
+																			   .scale = glm::vec3(1.0f) });
+
+		_registry.AddComponent<MeshComponent>(entity, MeshComponent{ .mesh_id = 4 });
+		_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 4 });
+	}
+
+	{
+		Entity entity = _registry.CreateEntity();
+
+		_registry.AddComponent<NameComponent>(entity, NameComponent{ .name = "Saber_Armor" });
+		_registry.AddComponent<TransformComponent>(entity, TransformComponent{ .position = glm::vec3(0.0f),
+																			   .rotation = glm::vec3(90.0f, 90.0f, 0.0f),
+																			   .scale = glm::vec3(1.0f) });
+
+		_registry.AddComponent<MeshComponent>(entity, MeshComponent{ .mesh_id = 5 });
+		_registry.AddComponent<MaterialComponent>(entity, MaterialComponent { .material_id = 5 });
+	}
+
 	SceneSerializer::Serialize(_registry, "scenes/default.json");
 }
 
